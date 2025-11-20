@@ -2,8 +2,12 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>شهادة الطالب</title>
+<title>شهادة الطالب - مدارس الفلاح الأهلية</title>
 <link href='https://fonts.googleapis.com/css2?family=Calibri:wght@400;700&display=swap' rel='stylesheet'>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+
 <style>
 body{font-family:Calibri;background:#f6f6f6;margin:0;padding:25px}
 table{width:100%;border-collapse:collapse;margin-top:20px;font-size:22px}
@@ -40,6 +44,7 @@ td{border:1px solid #000;padding:10px;text-align:center}
 <table>
 <tr><td class="label">اسم الطالب</td><td class="value" id="student_name"></td></tr>
 <tr><td class="label">الصف</td><td class="value" id="grade"></td></tr>
+<tr><td class="label">الشعبة</td><td class="value" id="section"></td></tr>
 <tr><td class="label">اختبار</td><td class="value" id="examType"></td></tr>
 <tr><td class="label">الدرجة النهائية</td><td class="value" id="fullMark"></td></tr>
 <tr><td class="label">درجة الطالب</td><td class="value" id="mark"></td></tr>
@@ -64,12 +69,22 @@ td{border:1px solid #000;padding:10px;text-align:center}
 </div>
 
 <script>
+var firebaseConfig = {
+  apiKey: "AIzaSyCX-KNQTu0Y1tnTGWd1sKtXLDUmR7Tehek",
+  authDomain: "english-results.firebaseapp.com",
+  projectId: "english-results",
+  storageBucket: "english-results.firebasestorage.app",
+  messagingSenderId: "673616902884",
+  appId: "1:673616902884:web:62c38d39a3c1a0694a4af1"
+};
+firebase.initializeApp(firebaseConfig);
+var db = firebase.firestore();
+
 function calcRating(mark, full){
  let m = Number(mark);
  let f = Number(full);
  if(!m || !f) return "—";
  let p = (m/f)*100;
-
  if(p>=90) return "ممتاز";
  if(p>=80) return "جيد جدًا";
  if(p>=70) return "جيد";
@@ -77,24 +92,36 @@ function calcRating(mark, full){
  return "ضعيف";
 }
 
-function loadData(){
- let all = localStorage.getItem("students");
- all = all ? JSON.parse(all) : {};
-
+async function loadData(){
  let c = document.getElementById('code').value.trim();
- if(!all[c]){alert("الكود غير موجود");return;}
+ if(!c){
+   alert("ادخل كود الطالب");
+   return;
+ }
 
- let st = all[c];
- document.getElementById('cert').style.display="block";
+ try{
+   var doc = await db.collection("students").doc(c).get();
+   if(!doc.exists){
+     alert("الكود غير موجود");
+     return;
+   }
+   var st = doc.data();
 
- document.getElementById('student_name').innerText = st.name || "";
- document.getElementById('grade').innerText = st.grade || "";
- document.getElementById('examType').innerText = st.examType ? ("اختبار " + st.examType) : "";
- document.getElementById('fullMark').innerText = st.fullMark;
- document.getElementById('mark').innerText = st.mark;
- document.getElementById('teacher_fixed').innerText = st.teacher || "";
+   document.getElementById('cert').style.display="block";
 
- document.getElementById('rating').innerText = calcRating(st.mark, st.fullMark);
+   document.getElementById('student_name').innerText = st.name || "";
+   document.getElementById('grade').innerText = st.grade || "";
+   document.getElementById('section').innerText = st.section || "";
+   document.getElementById('examType').innerText = st.examType ? ("اختبار " + st.examType) : "";
+   document.getElementById('fullMark').innerText = st.fullMark || "";
+   document.getElementById('mark').innerText = (st.mark !== undefined && st.mark !== null) ? st.mark : "";
+   document.getElementById('teacher_fixed').innerText = st.teacher || "";
+
+   document.getElementById('rating').innerText = calcRating(st.mark, st.fullMark);
+ }catch(e){
+   alert("خطأ في قراءة بيانات الطالب");
+   console.log(e);
+ }
 }
 </script>
 
