@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>تسجيل الطلاب</title>
+<link href='https://fonts.googleapis.com/css2?family=Calibri:wght@400;700&display=swap' rel='stylesheet'>
+<style>
+body{font-family:Calibri;background:#f4f4f4;padding:20px;margin:0}
+h2{text-align:center;color:#1976d2}
+input,button{
+    width:100%;padding:15px;margin-top:10px;
+    font-size:18px;border:1px solid #999;border-radius:8px;
+}
+button{background:#1976d2;color:white;border:none;cursor:pointer}
+table{width:100%;border-collapse:collapse;margin-top:20px}
+td,th{border:1px solid #000;padding:10px;text-align:center}
+th{background:#1976d2;color:white}
+</style>
+</head>
+<body>
+
+<h2>تسجيل بيانات الطلاب (مرة واحدة)</h2>
+
+<input id="code" placeholder="كود الطالب">
+<input id="name" placeholder="اسم الطالب">
+<input id="grade" placeholder="الصف">
+<input id="teacher" placeholder="اسم المعلم">
+
+<button onclick="saveStudent()">حفظ الطالب</button>
+<button onclick="location='manage.html'">إدارة الطلاب</button>
+<button onclick="location='index.html'">الصفحة الرئيسية</button>
+
+<script>
+function loadEdit(){
+  const editCode = localStorage.getItem('editStudent');
+  if(!editCode) return;
+  let all = localStorage.getItem('students');
+  all = all ? JSON.parse(all) : {};
+  if(!all[editCode]) return;
+  const st = all[editCode];
+  document.getElementById('code').value = editCode;
+  document.getElementById('code').disabled = true;
+  document.getElementById('name').value = st.name || "";
+  document.getElementById('grade').value = st.grade || "";
+  document.getElementById('teacher').value = st.teacher || "";
+  localStorage.removeItem('editStudent');
+}
+
+function saveStudent(){
+    const codeInput = document.getElementById('code');
+    const nameInput = document.getElementById('name');
+    const gradeInput = document.getElementById('grade');
+    const teacherInput = document.getElementById('teacher');
+
+    if(codeInput.value.trim()=="" || nameInput.value.trim()==""){
+        alert("برجاء إدخال كود الطالب والاسم");
+        return;
+    }
+
+    let all = localStorage.getItem("students");
+    all = all ? JSON.parse(all) : {};
+
+    const existing = all[codeInput.value] || {};
+    all[codeInput.value] = {
+        name: nameInput.value,
+        grade: gradeInput.value,
+        teacher: teacherInput.value,
+        examType: existing.examType || "",
+        fullMark: existing.fullMark || "",
+        mark: existing.mark || ""
+    };
+
+    localStorage.setItem("students", JSON.stringify(all));
+    alert("تم حفظ بيانات الطالب");
+    codeInput.disabled = false;
+    codeInput.value = "";
+    nameInput.value = "";
+    gradeInput.value = "";
+    teacherInput.value = "";
+}
+
+loadEdit();
+</script>
+
+</body>
+</html>
