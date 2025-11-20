@@ -51,14 +51,27 @@ button{
 </style>
 </head>
 <body>
+
 <div class="container">
     <h1>مدارس الفلاح الأهلية</h1>
     <h2>قسم اللغة الإنجليزية</h2>
 
-    <button class="admin" onclick="location='admin.html'">تسجيل الطلاب</button>
-    <button class="admin" onclick="location='admin_scores.html'">درجات الاختبارات</button>
-    <button class="admin" onclick="location='manage.html'">إدارة الطلاب</button>
+    <button class="admin" onclick="enterAdmin('admin.html')">تسجيل الطلاب</button>
+    <button class="admin" onclick="enterAdmin('admin_scores.html')">درجات الاختبارات</button>
+    <button class="admin" onclick="enterAdmin('manage.html')">إدارة الطلاب</button>
     <button class="student" onclick="location='student.html'">صفحة الطالب</button>
 </div>
+
+<script>
+function enterAdmin(page){
+    let pass = prompt("ادخل الرقم السري");
+    if(pass === "010096"){
+        location = page;
+    } else {
+        alert("الرقم السري غير صحيح");
+    }
+}
+</script>
+
 </body>
 </html>
