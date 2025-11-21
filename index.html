@@ -47,12 +47,42 @@ button:hover{opacity:0.9;}
 </div>
 
 <script>
-function login(){
+// إعداد Firebase
+var firebaseConfig = {
+  apiKey: "AIzaSyCX-KNQTu0Y1tnTGWd1sKtXLDUmR7Tehek",
+  authDomain: "english-results.firebaseapp.com",
+  projectId: "english-results",
+  storageBucket: "english-results.firebasestorage.app",
+  messagingSenderId: "673616902884",
+  appId: "1:673616902884:web:62c38d39a3c1a0694a4af1"
+};
+firebase.initializeApp(firebaseConfig);
+var db = firebase.firestore();
+
+async function login(){
   var p = document.getElementById('pwd').value.trim();
-  if(p === "010096"){
-    location = "admin.html";
-  }else{
-    alert("الرقم السري غير صحيح");
+
+  // البحث عن كلمة مرور المشرف في Firebase
+  try {
+    var adminRef = db.collection("admins").doc("supervisor"); // تأكد من أن هذا هو المسار الصحيح
+    var doc = await adminRef.get();
+
+    if (!doc.exists) {
+      alert("لا يوجد مشرف مسجل");
+      return;
+    }
+
+    var storedPwd = doc.data().password; // احفظ كلمة المرور في Firebase كـ "password"
+
+    if (p === storedPwd) {
+      location = "admin.html";
+    } else {
+      alert("الرقم السري غير صحيح");
+    }
+
+  } catch (e) {
+    alert("حدث خطأ في الاتصال بقاعدة البيانات");
+    console.log(e);
   }
 }
 </script>
