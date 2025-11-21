@@ -1,446 +1,134 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<title>لوحة المشرف - مدارس الفلاح الأهلية</title>
-<link href="https://fonts.googleapis.com/css2?family=Calibri:wght@400;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <title>صفحة المشرف - مدارس الفلاح الأهلية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Calibri:wght@400;700&display=swap" rel="stylesheet">
 
-<!-- Firebase compat SDKs -->
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <!-- Firebase compat SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 
-<style>
-body{
-  font-family:Calibri;
-  background:#f4f4f4;
-  margin:0;
-}
-.header{
-  background:#1976d2;color:#fff;
-  padding:15px;text-align:center;
-}
-.header h1{margin:0;font-size:26px;}
-.header h2{margin:5px 0 0;font-size:20px;color:#ffeb3b;}
-.container{
-  max-width:1100px;margin:20px auto;padding:10px;
-}
-.box{
-  background:#fff;border-radius:10px;
-  padding:15px;margin-bottom:15px;
-  box-shadow:0 0 8px rgba(0,0,0,0.1);
-}
-.box h3{margin-top:0;color:#1976d2;}
-input,select,button{
-  font-family:Calibri;
-  font-size:16px;
-  padding:8px;
-  margin:5px 0;
-  border-radius:6px;
-  border:1px solid #999;
-}
-input,select{width:100%;box-sizing:border-box;}
-button{
-  cursor:pointer;border:none;
-  font-weight:bold;
-}
-.btn-primary{background:#1976d2;color:#fff;}
-.btn-danger{background:#d32f2f;color:#fff;}
-.btn-secondary{background:#757575;color:#fff;}
-.btn-save-marks{
-  width:100%;padding:12px;
-  margin-top:10px;font-size:18px;
-  border-radius:10px;
-  background:#388e3c;color:#fff;
-}
-.row{
-  display:flex;flex-wrap:wrap;gap:10px;
-}
-.col-3{flex:1 1 23%;}
-.col-4{flex:1 1 30%;}
-.col-6{flex:1 1 48%;}
-.col-12{flex:1 1 100%;}
-@media(max-width:768px){
-  .col-3,.col-4,.col-6{flex:1 1 100%;}
-}
-table{
-  width:100%;border-collapse:collapse;
-  margin-top:10px;font-size:14px;
-}
-th,td{
-  border:1px solid #000;
-  text-align:center;
-  padding:6px;
-}
-th{
-  background:#1976d2;color:#fff;
-}
-.mark-input{
-  width:70px;
-}
-.rating-cell{
-  font-weight:bold;
-}
-</style>
+    <style>
+        body { font-family: Calibri; background: #f4f4f4; margin: 0; padding: 20px; }
+        .header { background: #1976d2; color: #fff; padding: 15px; text-align: center; }
+        .header h1 { margin: 0; font-size: 26px; }
+        .header h2 { margin: 5px 0; font-size: 20px; color: #ffeb3b; }
+        .container { max-width: 900px; margin: 20px auto; padding: 20px; }
+        .btn { padding: 10px 20px; font-size: 16px; margin: 10px; background-color: #1976d2; color: white; border: none; cursor: pointer; }
+        .btn:hover { background-color: #1565c0; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 18px; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: center; }
+        th { background-color: #1976d2; color: white; }
+        .result { margin-top: 20px; }
+    </style>
 </head>
 <body>
-
-<div class="header">
-  <h1>مدارس الفلاح الأهلية</h1>
-  <h2>قسم اللغة الإنجليزية - لوحة المشرف</h2>
-</div>
-
-<div class="container">
-
-  <!-- تسجيل / تعديل الطالب -->
-  <div class="box">
-    <h3>تسجيل / تعديل بيانات الطالب (مرة واحدة)</h3>
-    <div class="row">
-      <div class="col-3">
-        <label>كود الطالب</label>
-        <input id="st_code" placeholder="مثال: 1001">
-      </div>
-      <div class="col-3">
-        <label>اسم الطالب</label>
-        <input id="st_name" placeholder="اسم الطالب">
-      </div>
-      <div class="col-3">
-        <label>الصف</label>
-        <select id="st_grade"></select>
-      </div>
-      <div class="col-3">
-        <label>الشعبة</label>
-        <select id="st_section"></select>
-      </div>
-
-      <div class="col-4">
-        <label>اسم المعلم</label>
-        <input id="st_teacher" placeholder="اسم المعلم">
-      </div>
-      <div class="col-4">
-        <label>نوع الاختبار</label>
-        <input id="st_examType" placeholder="نهائي / فترة / قصير">
-      </div>
-      <div class="col-4">
-        <label>الدرجة النهائية</label>
-        <input id="st_fullMark" type="number" placeholder="مثال: 20">
-      </div>
+    <div class="header">
+        <h1>مدارس الفلاح الأهلية</h1>
+        <h2>لوحة المشرف</h2>
     </div>
 
-    <div class="row">
-      <div class="col-6">
-        <button class="btn-primary" onclick="saveStudent()">حفظ / تحديث الطالب</button>
-      </div>
-      <div class="col-6">
-        <button class="btn-secondary" onclick="clearForm()">تفريغ النموذج</button>
-      </div>
-    </div>
-  </div>
+    <div class="container">
+        <h3>إدخال بيانات الطالب</h3>
+        <label>أدخل كود الطالب:</label>
+        <input id="studentCode" type="text" placeholder="أدخل كود الطالب هنا">
+        <button class="btn" onclick="loadStudentData()">عرض بيانات الطالب</button>
 
-  <!-- البحث / كشف الطلاب / رصد الدرجات -->
-  <div class="box">
-    <h3>كشف الطلاب ورصد الدرجات</h3>
-    <div class="row">
-      <div class="col-3">
-        <label>الصف</label>
-        <select id="filter_grade"></select>
-      </div>
-      <div class="col-3">
-        <label>الشعبة</label>
-        <select id="filter_section">
-          <option value="">كل الشعب</option>
-          <option value="أ">أ</option>
-          <option value="ب">ب</option>
-          <option value="ج">ج</option>
-        </select>
-      </div>
-      <div class="col-3">
-        <label>بحث بالكود</label>
-        <input id="filter_code" placeholder="كود الطالب">
-      </div>
-      <div class="col-3">
-        <label>بحث بالاسم</label>
-        <input id="filter_name" placeholder="جزء من الاسم">
-      </div>
+        <div class="result" id="studentData" style="display: none;">
+            <table>
+                <tr><th>اسم الطالب</th><td id="studentName"></td></tr>
+                <tr><th>الصف</th><td id="studentGrade"></td></tr>
+                <tr><th>المادة</th><td id="subject"></td></tr> <!-- تم إضافة حقل المادة هنا -->
+                <tr><th>درجة الطالب</th><td id="studentMark"></td></tr>
+                <tr><th>الدرجة النهائية</th><td id="finalMark"></td></tr>
+                <tr><th>التقدير</th><td id="rating"></td></tr>
+            </table>
+        </div>
+
+        <h3>تعديل بيانات الطالب:</h3>
+        <input type="text" id="newSubject" placeholder="أدخل اسم المادة هنا"> <!-- خانة المادة التي يتم إدخالها -->
+        <button class="btn" onclick="saveStudent()">حفظ بيانات الطالب</button>
     </div>
 
-    <div class="row">
-      <div class="col-4">
-        <button class="btn-primary" onclick="loadStudents()">عرض كشف الطلاب</button>
-      </div>
-      <div class="col-4">
-        <button class="btn-secondary" onclick="reloadAll()">تحديث البيانات من السحابة</button>
-      </div>
-      <div class="col-4">
-        <span style="font-size:13px;color:#555;display:block;margin-top:10px;">ملاحظة: رصد الدرجات يكون بإدخال درجة الطالب فقط، ثم الضغط على حفظ جميع الدرجات.</span>
-      </div>
-    </div>
+    <script>
+        var firebaseConfig = {
+            apiKey: "AIzaSyCX-KNQTu0Y1tnTGWd1sKtXLDUmR7Tehek",
+            authDomain: "english-results.firebaseapp.com",
+            projectId: "english-results",
+            storageBucket: "english-results.firebasestorage.app",
+            messagingSenderId: "673616902884",
+            appId: "1:673616902884:web:62c38d39a3c1a0694a4af1"
+        };
+        firebase.initializeApp(firebaseConfig);
+        var db = firebase.firestore();
 
-    <table id="students_table">
-      <thead>
-        <tr>
-          <th>الكود</th>
-          <th>اسم الطالب</th>
-          <th>الصف</th>
-          <th>الشعبة</th>
-          <th>المعلم</th>
-          <th>نوع الاختبار</th>
-          <th>الدرجة النهائية</th>
-          <th>درجة الطالب</th>
-          <th>التقدير</th>
-          <th>إجراءات</th>
-        </tr>
-      </thead>
-      <tbody id="students_body">
-      </tbody>
-    </table>
+        // دالة لحساب التقدير بناءً على درجة الطالب
+        function calculateRating(mark, fullMark) {
+            var percentage = (mark / fullMark) * 100;
+            if (percentage >= 90) return "ممتاز";
+            if (percentage >= 80) return "جيد جداً";
+            if (percentage >= 70) return "جيد";
+            if (percentage >= 60) return "مقبول";
+            return "ضعيف";
+        }
 
-    <button class="btn-save-marks" onclick="saveAllMarks()">حفظ جميع الدرجات</button>
-  </div>
+        // دالة لتحميل بيانات الطالب
+        function loadStudentData() {
+            var code = document.getElementById("studentCode").value.trim();
+            if (!code) {
+                alert("الرجاء إدخال كود الطالب");
+                return;
+            }
 
-  <div class="box">
-    <button class="btn-secondary" onclick="location='index.html'">العودة للصفحة الرئيسية</button>
-    <button class="btn-secondary" onclick="location='student.html'">صفحة الطالب</button>
-  </div>
+            db.collection("students").doc(code).get().then(function(doc) {
+                if (doc.exists) {
+                    var studentData = doc.data();
+                    document.getElementById("studentName").innerText = studentData.name || "غير متوفر";
+                    document.getElementById("studentGrade").innerText = studentData.grade || "غير متوفر";
+                    document.getElementById("subject").innerText = studentData.subject || "غير متوفر"; // المادة التي تم إدخالها
+                    document.getElementById("studentMark").innerText = studentData.mark || "غير متوفر";
+                    document.getElementById("finalMark").innerText = studentData.fullMark || "غير متوفر";
+                    document.getElementById("rating").innerText = calculateRating(studentData.mark, studentData.fullMark);
+                    document.getElementById("studentData").style.display = "block";
+                } else {
+                    alert("الطالب غير موجود");
+                }
+            }).catch(function(error) {
+                console.error("Error getting document:", error);
+            });
+        }
 
-</div>
+        // دالة لحفظ بيانات الطالب
+        function saveStudent() {
+            var code = document.getElementById("studentCode").value.trim();
+            var newSubject = document.getElementById("newSubject").value.trim();
+            var name = document.getElementById("studentName").innerText;
+            var grade = document.getElementById("studentGrade").innerText;
+            var mark = document.getElementById("studentMark").innerText;
+            var fullMark = document.getElementById("finalMark").innerText;
 
-<script>
-var firebaseConfig = {
-  apiKey: "AIzaSyCX-KNQTu0Y1tnTGWd1sKtXLDUmR7Tehek",
-  authDomain: "english-results.firebaseapp.com",
-  projectId: "english-results",
-  storageBucket: "english-results.firebasestorage.app",
-  messagingSenderId: "673616902884",
-  appId: "1:673616902884:web:62c38d39a3c1a0694a4af1"
-};
-firebase.initializeApp(firebaseConfig);
-var db = firebase.firestore();
+            if (!name || !grade || !newSubject || !mark || !fullMark) {
+                alert("برجاء إدخال كافة البيانات");
+                return;
+            }
 
-var gradesList = [
-  "1 ابتدائي","2 ابتدائي","3 ابتدائي","4 ابتدائي","5 ابتدائي","6 ابتدائي",
-  "1 متوسط","2 متوسط","3 متوسط",
-  "1 ثانوي","2 ثانوي","3 ثانوي"
-];
+            var studentData = {
+                name: name,
+                grade: grade,
+                subject: newSubject, // حفظ المادة التي تم إدخالها
+                mark: mark,
+                fullMark: fullMark
+            };
 
-var studentsCache = [];
-
-function initSelects(){
-  var stGrade = document.getElementById('st_grade');
-  var filterGrade = document.getElementById('filter_grade');
-  stGrade.innerHTML = "";
-  filterGrade.innerHTML = "<option value=''>كل الصفوف</option>";
-  gradesList.forEach(function(g){
-    var o1 = document.createElement("option");
-    o1.value = g; o1.textContent = g;
-    stGrade.appendChild(o1);
-
-    var o2 = document.createElement("option");
-    o2.value = g; o2.textContent = g;
-    filterGrade.appendChild(o2);
-  });
-
-  var stSection = document.getElementById('st_section');
-  stSection.innerHTML = "";
-  ["أ","ب","ج"].forEach(function(s){
-    var o = document.createElement("option");
-    o.value = s; o.textContent = s;
-    stSection.appendChild(o);
-  });
-}
-
-function calcRating(mark, full){
-  var m = Number(mark);
-  var f = Number(full);
-  if(!m || !f) return "";
-  var p = (m/f)*100;
-  if(p>=90) return "ممتاز";
-  if(p>=80) return "جيد جدًا";
-  if(p>=70) return "جيد";
-  if(p>=60) return "مقبول";
-  return "ضعيف";
-}
-
-function clearForm(){
-  document.getElementById('st_code').value = "";
-  document.getElementById('st_code').disabled = false;
-  document.getElementById('st_name').value = "";
-  document.getElementById('st_grade').value = gradesList[0];
-  document.getElementById('st_section').value = "أ";
-  document.getElementById('st_teacher').value = "";
-  document.getElementById('st_examType').value = "";
-  document.getElementById('st_fullMark').value = "";
-}
-
-async function saveStudent(){
-  var code = document.getElementById('st_code').value.trim();
-  var name = document.getElementById('st_name').value.trim();
-  var grade = document.getElementById('st_grade').value;
-  var section = document.getElementById('st_section').value;
-  var teacher = document.getElementById('st_teacher').value.trim();
-  var examType = document.getElementById('st_examType').value.trim();
-  var fullMark = Number(document.getElementById('st_fullMark').value);
-
-  if(!code || !name){
-    alert("برجاء إدخال كود الطالب واسم الطالب");
-    return;
-  }
-
-  var data = {
-    name: name,
-    grade: grade,
-    section: section,
-    teacher: teacher,
-    examType: examType,
-    fullMark: isNaN(fullMark) ? 0 : fullMark
-  };
-
-  try{
-    await db.collection("students").doc(code).set(data, {merge:true});
-    alert("تم حفظ / تحديث بيانات الطالب بنجاح");
-    loadStudents();
-  }catch(e){
-    alert("خطأ في حفظ الطالب");
-    console.log(e);
-  }
-}
-
-async function loadStudents(){
-  var filterGrade = document.getElementById('filter_grade').value;
-  var filterSection = document.getElementById('filter_section').value;
-  var searchCode = document.getElementById('filter_code').value.trim();
-  var searchName = document.getElementById('filter_name').value.trim();
-
-  var tbody = document.getElementById('students_body');
-  tbody.innerHTML = "";
-  studentsCache = [];
-
-  try{
-    var ref = db.collection("students");
-    if(filterGrade){
-      ref = ref.where("grade","==",filterGrade);
-    }
-    var snap = await ref.get();
-    snap.forEach(function(doc){
-      var s = doc.data();
-      s.code = doc.id;
-      studentsCache.push(s);
-    });
-
-    var filtered = studentsCache.filter(function(s){
-      if(filterSection && s.section !== filterSection) return false;
-      if(searchCode && s.code.indexOf(searchCode) === -1) return false;
-      if(searchName && (!s.name || s.name.indexOf(searchName) === -1)) return false;
-      return true;
-    });
-
-    filtered.forEach(function(s){
-      var tr = document.createElement("tr");
-
-      var markVal = (s.mark !== undefined && s.mark !== null) ? s.mark : "";
-      var rating = calcRating(markVal, s.fullMark);
-
-      tr.innerHTML =
-        "<td>"+(s.code||"")+"</td>"+
-        "<td>"+(s.name||"")+"</td>"+
-        "<td>"+(s.grade||"")+"</td>"+
-        "<td>"+(s.section||"")+"</td>"+
-        "<td>"+(s.teacher||"")+"</td>"+
-        "<td>"+(s.examType||"")+"</td>"+
-        "<td>"+(s.fullMark||"")+"</td>"+
-        "<td><input class='mark-input' data-code='"+s.code+"' data-full='"+(s.fullMark||0)+"' value='"+markVal+"'></td>"+
-        "<td class='rating-cell' id='rating_"+s.code+"'>"+rating+"</td>"+
-        "<td>"+
-          "<button class='btn-secondary' style='margin-bottom:3px;' onclick='fillForm(\""+s.code+"\")'>تعديل</button><br>"+
-          "<button class='btn-danger' onclick='deleteStudent(\""+s.code+"\")'>حذف</button>"+
-        "</td>";
-
-      tbody.appendChild(tr);
-    });
-
-  }catch(e){
-    alert("خطأ في تحميل الطلاب");
-    console.log(e);
-  }
-}
-
-function reloadAll(){
-  document.getElementById('filter_grade').value = "";
-  document.getElementById('filter_section').value = "";
-  document.getElementById('filter_code').value = "";
-  document.getElementById('filter_name').value = "";
-  loadStudents();
-}
-
-async function fillForm(code){
-  try{
-    var doc = await db.collection("students").doc(code).get();
-    if(!doc.exists){
-      alert("الطالب غير موجود");
-      return;
-    }
-    var s = doc.data();
-    document.getElementById('st_code').value = code;
-    document.getElementById('st_code').disabled = true;
-    document.getElementById('st_name').value = s.name || "";
-    document.getElementById('st_grade').value = s.grade || gradesList[0];
-    document.getElementById('st_section').value = s.section || "أ";
-    document.getElementById('st_teacher').value = s.teacher || "";
-    document.getElementById('st_examType').value = s.examType || "";
-    document.getElementById('st_fullMark').value = s.fullMark || "";
-    window.scrollTo({top:0,behavior:"smooth"});
-  }catch(e){
-    alert("خطأ في جلب بيانات الطالب");
-    console.log(e);
-  }
-}
-
-async function deleteStudent(code){
-  if(!confirm("هل تريد حذف هذا الطالب؟")) return;
-  try{
-    await db.collection("students").doc(code).delete();
-    alert("تم حذف الطالب");
-    loadStudents();
-  }catch(e){
-    alert("خطأ في حذف الطالب");
-    console.log(e);
-  }
-}
-
-async function saveAllMarks(){
-  var inputs = document.querySelectorAll(".mark-input");
-  var batch = db.batch();
-  var changed = 0;
-
-  inputs.forEach(function(inp){
-    var code = inp.getAttribute("data-code");
-    var full = Number(inp.getAttribute("data-full"));
-    var val = inp.value.trim();
-    if(val === "") return;
-    var m = Number(val);
-    if(isNaN(m)) return;
-    var ref = db.collection("students").doc(code);
-    batch.update(ref, {mark:m, fullMark: isNaN(full)?0:full});
-    changed++;
-  });
-
-  if(changed === 0){
-    alert("لا توجد درجات لإ保存ها");
-    return;
-  }
-
-  try{
-    await batch.commit();
-    alert("تم حفظ جميع الدرجات");
-    loadStudents();
-  }catch(e){
-    alert("خطأ في حفظ الدرجات");
-    console.log(e);
-  }
-}
-
-initSelects();
-loadStudents();
-</script>
-
+            db.collection("students").doc(code).set(studentData, { merge: true })
+            .then(function() {
+                alert("تم حفظ بيانات الطالب");
+            }).catch(function(error) {
+                console.error("خطأ في حفظ البيانات: ", error);
+            });
+        }
+    </script>
 </body>
 </html>
