@@ -222,6 +222,8 @@ var gradesList = [
   "1 ثانوي","2 ثانوي","3 ثانوي"
 ];
 
+var subjectsList = ["رياضيات", "علوم", "إنجليزي", "تاريخ", "جغرافيا", "فيزياء", "كيمياء"];
+
 var studentsCache = [];
 
 function initSelects(){
@@ -246,6 +248,14 @@ function initSelects(){
     o.value = s; o.textContent = s;
     stSection.appendChild(o);
   });
+
+  var stSubject = document.getElementById('st_subject');
+  stSubject.innerHTML = "";
+  subjectsList.forEach(function(s){
+    var o = document.createElement("option");
+    o.value = s; o.textContent = s;
+    stSubject.appendChild(o);
+  });
 }
 
 function calcRating(mark, full){
@@ -269,6 +279,7 @@ function clearForm(){
   document.getElementById('st_teacher').value = "";
   document.getElementById('st_examType').value = "";
   document.getElementById('st_fullMark').value = "";
+  document.getElementById('st_subject').value = subjectsList[0];
 }
 
 async function saveStudent(){
@@ -279,6 +290,7 @@ async function saveStudent(){
   var teacher = document.getElementById('st_teacher').value.trim();
   var examType = document.getElementById('st_examType').value.trim();
   var fullMark = Number(document.getElementById('st_fullMark').value);
+  var subject = document.getElementById('st_subject').value;
 
   if(!code || !name){
     alert("برجاء إدخال كود الطالب واسم الطالب");
@@ -291,7 +303,8 @@ async function saveStudent(){
     section: section,
     teacher: teacher,
     examType: examType,
-    fullMark: isNaN(fullMark) ? 0 : fullMark
+    fullMark: isNaN(fullMark) ? 0 : fullMark,
+    subject: subject
   };
 
   try{
@@ -307,6 +320,7 @@ async function saveStudent(){
 async function loadStudents(){
   var filterGrade = document.getElementById('filter_grade').value;
   var filterSection = document.getElementById('filter_section').value;
+  var filterSubject = document.getElementById('filter_subject').value;
   var searchCode = document.getElementById('filter_code').value.trim();
   var searchName = document.getElementById('filter_name').value.trim();
 
@@ -318,6 +332,9 @@ async function loadStudents(){
     var ref = db.collection("students");
     if(filterGrade){
       ref = ref.where("grade","==",filterGrade);
+    }
+    if(filterSubject){
+      ref = ref.where("subject","==",filterSubject);
     }
     var snap = await ref.get();
     snap.forEach(function(doc){
@@ -346,11 +363,11 @@ async function loadStudents(){
         "<td>"+(s.section||"")+"</td>"+
         "<td>"+(s.teacher||"")+"</td>"+
         "<td>"+(s.examType||"")+"</td>"+
-        "<td>"+(s.fullMark||"")+"</td>"+
+        "<td>"+(s.subject||"")+"</td>"+  <!-- عرض المادة -->
         "<td><input class='mark-input' data-code='"+s.code+"' data-full='"+(s.fullMark||0)+"' value='"+markVal+"'></td>"+
         "<td class='rating-cell' id='rating_"+s.code+"'>"+rating+"</td>"+
         "<td>"+
-          "<button class='btn-secondary' style='margin-bottom:3px;' onclick='fillForm(\""+s.code+"\")'>تعديل</button><br>"+
+          "<button class='btn-secondary' onclick='fillForm(\""+s.code+"\")'>تعديل</button><br>"+
           "<button class='btn-danger' onclick='deleteStudent(\""+s.code+"\")'>حذف</button>"+
         "</td>";
 
@@ -387,6 +404,7 @@ async function fillForm(code){
     document.getElementById('st_teacher').value = s.teacher || "";
     document.getElementById('st_examType').value = s.examType || "";
     document.getElementById('st_fullMark').value = s.fullMark || "";
+    document.getElementById('st_subject').value = s.subject || subjectsList[0];
     window.scrollTo({top:0,behavior:"smooth"});
   }catch(e){
     alert("خطأ في جلب بيانات الطالب");
