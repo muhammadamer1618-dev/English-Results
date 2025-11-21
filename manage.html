@@ -33,45 +33,64 @@ button.delete{background:#d32f2f !important}
 <button class="main-btn" onclick="location='index.html'">الصفحة الرئيسية</button>
 
 <script>
-function load(){
- let all = localStorage.getItem("students");
- all = all ? JSON.parse(all) : {};
+// إعداد Firebase
+var firebaseConfig = {
+  apiKey: "AIzaSyCX-KNQTu0Y1tnTGWd1sKtXLDUmR7Tehek",
+  authDomain: "english-results.firebaseapp.com",
+  projectId: "english-results",
+  storageBucket: "english-results.firebasestorage.app",
+  messagingSenderId: "673616902884",
+  appId: "1:673616902884:web:62c38d39a3c1a0694a4af1"
+};
+firebase.initializeApp(firebaseConfig);
+var db = firebase.firestore();
 
- let tbl = document.getElementById("tbl");
+async function load(){
+  let tbl = document.getElementById("tbl");
 
- Object.keys(all).forEach(code=>{
-   let tr=document.createElement("tr");
-   tr.innerHTML=`
-     <td>${code}</td>
-     <td>${all[code].name || ""}</td>
-     <td>${all[code].grade || ""}</td>
-     <td>${all[code].teacher || ""}</td>
-     <td>
-        <button class="small" onclick="edit('${code}')">تعديل</button>
-        <button class="small delete" onclick="delStd('${code}')">حذف</button>
-     </td>
-   `;
-   tbl.appendChild(tr);
- });
+  try {
+    // تحميل الطلاب من Firebase
+    var snapshot = await db.collection("students").get();
+    
+    snapshot.forEach(doc => {
+      var student = doc.data();
+      let tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${doc.id}</td>
+        <td>${student.name || ""}</td>
+        <td>${student.grade || ""}</td>
+        <td>${student.teacher || ""}</td>
+        <td>
+          <button class="small" onclick="edit('${doc.id}')">تعديل</button>
+          <button class="small delete" onclick="delStd('${doc.id}')">حذف</button>
+        </td>
+      `;
+      tbl.appendChild(tr);
+    });
+  } catch (e) {
+    alert("حدث خطأ في تحميل الطلاب");
+    console.log(e);
+  }
 }
 
 function edit(code){
- localStorage.setItem("editStudent", code);
- location="admin.html";
+  localStorage.setItem("editStudent", code);
+  location="admin.html";
 }
 
-function delStd(code){
-    if(!confirm("هل تريد حذف هذا الطالب؟")) return;
+async function delStd(code){
+  if(!confirm("هل تريد حذف هذا الطالب؟")) return;
 
-    let all = localStorage.getItem("students");
-    all = all ? JSON.parse(all) : {};
-
-    delete all[code];
-
-    localStorage.setItem("students", JSON.stringify(all));
+  try {
+    // حذف الطالب من Firebase
+    await db.collection("students").doc(code).delete();
 
     alert("تم حذف الطالب بنجاح");
     location.reload();
+  } catch (e) {
+    alert("حدث خطأ أثناء حذف الطالب");
+    console.log(e);
+  }
 }
 
 load();
