@@ -22,28 +22,68 @@ button{background:#1976d2;color:white;border:none;cursor:pointer}
 <input id="examType" placeholder="نوع الاختبار (نهائي / فترة / قصير)">
 <input id="fullMark" placeholder="الدرجة النهائية">
 <input id="mark" placeholder="درجة الطالب">
+<select id="subject">
+    <option value="رياضيات">رياضيات</option>
+    <option value="إنجليزي">إنجليزي</option>
+    <option value="علوم">علوم</option>
+    <option value="تاريخ">تاريخ</option>
+    <option value="جغرافيا">جغرافيا</option>
+    <option value="فيزياء">فيزياء</option>
+    <option value="كيمياء">كيمياء</option>
+</select>
 
 <button onclick="saveScore()">حفظ الدرجات</button>
 <button onclick="location='index.html'">الصفحة الرئيسية</button>
 
 <script>
-function saveScore(){
- let codeInput = document.getElementById('code').value.trim();
- let examInput = document.getElementById('examType').value.trim();
- let fullInput = document.getElementById('fullMark').value.trim();
- let markInput = document.getElementById('mark').value.trim();
+// إعداد Firebase
+var firebaseConfig = {
+    apiKey: "AIzaSyCX-KNQTu0Y1tnTGWd1sKtXLDUmR7Tehek",
+    authDomain: "english-results.firebaseapp.com",
+    projectId: "english-results",
+    storageBucket: "english-results.firebasestorage.app",
+    messagingSenderId: "673616902884",
+    appId: "1:673616902884:web:62c38d39a3c1a0694a4af1"
+};
+firebase.initializeApp(firebaseConfig);
+var db = firebase.firestore();
 
- let all = localStorage.getItem("students");
- all = all ? JSON.parse(all) : {};
+async function saveScore(){
+    let codeInput = document.getElementById('code').value.trim();
+    let examInput = document.getElementById('examType').value.trim();
+    let fullInput = document.getElementById('fullMark').value.trim();
+    let markInput = document.getElementById('mark').value.trim();
+    let subjectInput = document.getElementById('subject').value;
 
- if(!all[codeInput]){alert("الطالب غير موجود");return;}
+    // التأكد من وجود المدخلات
+    if (!codeInput || !examInput || !fullInput || !markInput) {
+        alert("يرجى ملء جميع الحقول");
+        return;
+    }
 
- all[codeInput].examType = examInput;
- all[codeInput].fullMark = Number(fullInput);
- all[codeInput].mark = Number(markInput);
+    try {
+        // البحث عن الطالب في Firebase باستخدام الكود
+        var studentRef = db.collection("students").doc(codeInput);
+        var doc = await studentRef.get();
 
- localStorage.setItem("students", JSON.stringify(all));
- alert("تم حفظ درجات الطالب");
+        if (!doc.exists) {
+            alert("الطالب غير موجود");
+            return;
+        }
+
+        // تحديث بيانات الطالب في Firebase
+        await studentRef.update({
+            [`subjects.${subjectInput}.examType`]: examInput,
+            [`subjects.${subjectInput}.fullMark`]: Number(fullInput),
+            [`subjects.${subjectInput}.mark`]: Number(markInput)
+        });
+
+        alert("تم حفظ درجات الطالب");
+
+    } catch (e) {
+        alert("حدث خطأ في حفظ الدرجات");
+        console.log(e);
+    }
 }
 </script>
 
