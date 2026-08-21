@@ -6,6 +6,147 @@
 <title>Admin Dashboard</title>
 <link rel="stylesheet" href="style.css"/>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<style>
+
+/* ================================
+   تحسينات الإسناد الجماعي فقط
+================================ */
+
+.bulk-assignment-box{
+background:#020617;
+border:1px solid rgba(255,255,255,.08);
+border-radius:22px;
+padding:20px;
+margin-bottom:25px;
+}
+
+.bulk-assignment-title{
+font-size:18px;
+font-weight:900;
+color:#facc15;
+margin-bottom:15px;
+}
+
+.assignment-teacher-select{
+max-width:450px;
+margin-bottom:20px;
+}
+
+.classes-checkbox-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+gap:10px;
+margin-top:15px;
+}
+
+.class-check-card{
+display:flex;
+align-items:center;
+gap:10px;
+background:#111827;
+border:1px solid rgba(255,255,255,.08);
+padding:12px 14px;
+border-radius:14px;
+cursor:pointer;
+font-weight:800;
+transition:.2s;
+}
+
+.class-check-card:hover{
+border-color:#facc15;
+}
+
+.class-check-card input{
+width:18px;
+height:18px;
+accent-color:#facc15;
+cursor:pointer;
+}
+
+.assignment-actions{
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+margin-top:20px;
+}
+
+.danger-btn{
+border:none;
+padding:12px 18px;
+border-radius:14px;
+cursor:pointer;
+font-weight:800;
+background:#dc2626;
+color:white;
+}
+
+.danger-dark-btn{
+border:none;
+padding:12px 18px;
+border-radius:14px;
+cursor:pointer;
+font-weight:800;
+background:#7f1d1d;
+color:white;
+}
+
+.assignment-teacher-block{
+background:#020617;
+border:1px solid rgba(255,255,255,.07);
+border-radius:18px;
+padding:16px;
+margin-bottom:14px;
+}
+
+.assignment-teacher-head{
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:12px;
+flex-wrap:wrap;
+margin-bottom:12px;
+}
+
+.assignment-teacher-name{
+font-size:18px;
+font-weight:900;
+color:#facc15;
+}
+
+.assigned-classes{
+display:flex;
+gap:8px;
+flex-wrap:wrap;
+}
+
+.assigned-class-chip{
+background:#111827;
+border:1px solid rgba(255,255,255,.08);
+padding:7px 11px;
+border-radius:20px;
+font-size:13px;
+font-weight:800;
+}
+
+.empty-assignment{
+color:#94a3b8;
+font-weight:700;
+}
+
+@media(max-width:700px){
+
+.classes-checkbox-grid{
+grid-template-columns:1fr;
+}
+
+.assignment-actions button{
+width:100%;
+}
+
+}
+
+</style>
 </head>
 
 <body>
@@ -13,244 +154,548 @@
 <div class="dashboard-layout">
 
 <div class="sidebar">
-  <div class="logo-box">Rased<br>Insights</div>
 
-  <div class="user-box">
-    <div class="user-title">الأدمن الحالي</div>
-    <div class="user-name">محمد عامر أحمد</div>
-  </div>
+<div class="logo-box">
+Rased<br>Insights
+</div>
 
-  <div class="menu">
-    <button onclick="showSection('overviewSection')">لوحة التحكم</button>
-    <button onclick="showSection('teachersSection')">المعلمين</button>
-    <button onclick="showSection('supervisorsSection')">المشرفين</button>
-    <button onclick="showSection('classesSection')">الفصول</button>
-    <button onclick="showSection('studentsSection')">الطلاب</button>
-    <button onclick="showSection('assignmentsSection')">الإسناد</button>
-    <button onclick="showSection('examsSection')">الاختبارات</button>
-    <button onclick="showSection('archiveSection')">الأرشيف</button>
-    <button class="logout-btn" onclick="logout()">تسجيل الخروج</button>
-  </div>
+<div class="user-box">
+<div class="user-title">الأدمن الحالي</div>
+<div class="user-name">محمد عامر أحمد</div>
+</div>
+
+<div class="menu">
+
+<button onclick="showSection('overviewSection')">
+لوحة التحكم
+</button>
+
+<button onclick="showSection('teachersSection')">
+المعلمين
+</button>
+
+<button onclick="showSection('supervisorsSection')">
+المشرفين
+</button>
+
+<button onclick="showSection('classesSection')">
+الفصول
+</button>
+
+<button onclick="showSection('studentsSection')">
+الطلاب
+</button>
+
+<button onclick="showSection('assignmentsSection')">
+الإسناد
+</button>
+
+<button onclick="showSection('examsSection')">
+الاختبارات
+</button>
+
+<button onclick="showSection('archiveSection')">
+الأرشيف
+</button>
+
+<button class="logout-btn" onclick="logout()">
+تسجيل الخروج
+</button>
+
+</div>
+
 </div>
 
 <div class="main">
 
+<!-- =========================
+     لوحة التحكم
+========================= -->
+
 <div class="section active-section" id="overviewSection">
-  <div class="section-header">
-    <div class="section-title">لوحة التحكم</div>
-  </div>
 
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-title">المعلمين</div>
-      <div class="stat-number" id="teachersCount">0</div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-title">المشرفين</div>
-      <div class="stat-number" id="supervisorsCount">0</div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-title">الفصول</div>
-      <div class="stat-number" id="classesCount">0</div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-title">الطلاب</div>
-      <div class="stat-number" id="studentsCount">0</div>
-    </div>
-  </div>
+<div class="section-header">
+<div class="section-title">لوحة التحكم</div>
 </div>
+
+<div class="stats-grid">
+
+<div class="stat-card">
+<div class="stat-title">المعلمين</div>
+<div class="stat-number" id="teachersCount">0</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-title">المشرفين</div>
+<div class="stat-number" id="supervisorsCount">0</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-title">الفصول</div>
+<div class="stat-number" id="classesCount">0</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-title">الطلاب</div>
+<div class="stat-number" id="studentsCount">0</div>
+</div>
+
+</div>
+
+</div>
+
+<!-- =========================
+     المعلمين
+========================= -->
 
 <div class="section" id="teachersSection">
-  <div class="section-header">
-    <div class="section-title">إدارة المعلمين</div>
-    <button class="primary-btn" onclick="openModal('teacher')">إضافة معلم</button>
-  </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>الاسم</th>
-        <th>Username</th>
-        <th>Password</th>
-        <th>الإجراءات</th>
-      </tr>
-    </thead>
-    <tbody id="teachersTable"></tbody>
-  </table>
+<div class="section-header">
+
+<div class="section-title">
+إدارة المعلمين
 </div>
+
+<div style="display:flex;gap:10px;flex-wrap:wrap;">
+
+<button
+class="primary-btn"
+onclick="openModal('teacher')"
+>
+إضافة معلم
+</button>
+
+<button
+class="danger-btn"
+onclick="deleteAllTeachers()"
+>
+حذف جميع المعلمين
+</button>
+
+</div>
+
+</div>
+
+<table>
+
+<thead>
+<tr>
+<th>الاسم</th>
+<th>Username</th>
+<th>Password</th>
+<th>الإجراءات</th>
+</tr>
+</thead>
+
+<tbody id="teachersTable"></tbody>
+
+</table>
+
+</div>
+
+<!-- =========================
+     المشرفين
+========================= -->
 
 <div class="section" id="supervisorsSection">
-  <div class="section-header">
-    <div class="section-title">إدارة المشرفين</div>
-    <button class="primary-btn" onclick="openModal('supervisor')">إضافة مشرف</button>
-  </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>الاسم</th>
-        <th>Username</th>
-        <th>Password</th>
-        <th>الإجراءات</th>
-      </tr>
-    </thead>
-    <tbody id="supervisorsTable"></tbody>
-  </table>
+<div class="section-header">
+
+<div class="section-title">
+إدارة المشرفين
 </div>
+
+<button
+class="primary-btn"
+onclick="openModal('supervisor')"
+>
+إضافة مشرف
+</button>
+
+</div>
+
+<table>
+
+<thead>
+<tr>
+<th>الاسم</th>
+<th>Username</th>
+<th>Password</th>
+<th>الإجراءات</th>
+</tr>
+</thead>
+
+<tbody id="supervisorsTable"></tbody>
+
+</table>
+
+</div>
+
+<!-- =========================
+     الفصول
+========================= -->
 
 <div class="section" id="classesSection">
-  <div class="section-header">
-    <div class="section-title">إدارة الفصول</div>
-    <button class="primary-btn" onclick="openModal('class')">إضافة فصل</button>
-  </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>الفصل</th>
-        <th>الإجراءات</th>
-      </tr>
-    </thead>
-    <tbody id="classesTable"></tbody>
-  </table>
+<div class="section-header">
+
+<div class="section-title">
+إدارة الفصول
 </div>
+
+<div style="display:flex;gap:10px;flex-wrap:wrap;">
+
+<button
+class="primary-btn"
+onclick="openModal('class')"
+>
+إضافة فصل
+</button>
+
+<button
+class="danger-btn"
+onclick="deleteAllClasses()"
+>
+حذف جميع الفصول
+</button>
+
+</div>
+
+</div>
+
+<table>
+
+<thead>
+<tr>
+<th>الفصل</th>
+<th>الإجراءات</th>
+</tr>
+</thead>
+
+<tbody id="classesTable"></tbody>
+
+</table>
+
+</div>
+
+<!-- =========================
+     الطلاب
+========================= -->
 
 <div class="section" id="studentsSection">
-  <div class="section-header">
-    <div class="section-title">إدارة الطلاب</div>
 
-    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <button class="primary-btn" onclick="openModal('student')">إضافة طالب</button>
+<div class="section-header">
 
-      <button class="primary-btn" onclick="document.getElementById('excelFile').click()">
-        استيراد Excel
-      </button>
-
-      <button
-        class="delete-btn"
-        style="border:none;padding:12px 18px;border-radius:14px;cursor:pointer;font-weight:800;"
-        onclick="deleteAllStudents()"
-      >
-        حذف جميع الطلاب
-      </button>
-
-      <input type="file" id="excelFile" accept=".xlsx,.xls" class="hidden"/>
-    </div>
-  </div>
-
-  <table>
-    <thead>
-      <tr>
-        <th>اسم الطالب</th>
-        <th>الفصل</th>
-        <th>رقم ولي الأمر</th>
-        <th>الإجراءات</th>
-      </tr>
-    </thead>
-    <tbody id="studentsTable"></tbody>
-  </table>
+<div class="section-title">
+إدارة الطلاب
 </div>
+
+<div style="display:flex;gap:10px;flex-wrap:wrap;">
+
+<button
+class="primary-btn"
+onclick="openModal('student')"
+>
+إضافة طالب
+</button>
+
+<button
+class="primary-btn"
+onclick="document.getElementById('excelFile').click()"
+>
+استيراد Excel
+</button>
+
+<button
+class="danger-btn"
+onclick="deleteAllStudents()"
+>
+حذف جميع الطلاب
+</button>
+
+<input
+type="file"
+id="excelFile"
+accept=".xlsx,.xls"
+class="hidden"
+/>
+
+</div>
+
+</div>
+
+<table>
+
+<thead>
+
+<tr>
+<th>اسم الطالب</th>
+<th>الفصل</th>
+<th>رقم ولي الأمر</th>
+<th>الإجراءات</th>
+</tr>
+
+</thead>
+
+<tbody id="studentsTable"></tbody>
+
+</table>
+
+</div>
+
+<!-- =========================
+     الإسناد الجديد
+========================= -->
 
 <div class="section" id="assignmentsSection">
-  <div class="section-header">
-    <div class="section-title">إسناد المعلمين</div>
-    <button class="primary-btn" onclick="openModal('assignment')">إسناد جديد</button>
-  </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>الفصل</th>
-        <th>المعلم</th>
-        <th>الإجراءات</th>
-      </tr>
-    </thead>
-    <tbody id="assignmentsTable"></tbody>
-  </table>
+<div class="section-header">
+
+<div class="section-title">
+إسناد المعلمين
 </div>
+
+<button
+class="danger-dark-btn"
+onclick="deleteAllAssignments()"
+>
+حذف الإسناد كاملًا
+</button>
+
+</div>
+
+<div class="bulk-assignment-box">
+
+<div class="bulk-assignment-title">
+إسناد مجموعة فصول لمعلم
+</div>
+
+<div class="input-group assignment-teacher-select">
+
+<select id="bulkTeacherSelect">
+
+<option value="">
+اختر المعلم
+</option>
+
+</select>
+
+</div>
+
+<div id="classesCheckboxArea">
+
+<div class="empty-assignment">
+اختر المعلم أولًا لعرض جميع الفصول.
+</div>
+
+</div>
+
+<div class="assignment-actions">
+
+<button
+class="primary-btn"
+onclick="saveBulkAssignment()"
+>
+حفظ الإسناد
+</button>
+
+<button
+class="primary-btn"
+onclick="selectAllClasses()"
+>
+تحديد جميع الفصول
+</button>
+
+<button
+class="primary-btn"
+onclick="clearClassSelection()"
+>
+إلغاء تحديد الكل
+</button>
+
+</div>
+
+</div>
+
+<div class="section-title" style="font-size:20px;margin-bottom:15px;">
+الإسنادات الحالية
+</div>
+
+<div id="assignmentsContainer"></div>
+
+</div>
+
+<!-- =========================
+     الاختبارات
+========================= -->
 
 <div class="section" id="examsSection">
-  <div class="section-header">
-    <div class="section-title">إدارة الاختبارات</div>
-    <button class="primary-btn" onclick="openModal('exam')">إضافة اختبار</button>
-  </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>الترتيب</th>
-        <th>الاختبار</th>
-        <th>الدرجة النهائية</th>
-        <th>الإجراءات</th>
-      </tr>
-    </thead>
-    <tbody id="examsTable"></tbody>
-  </table>
+<div class="section-header">
+
+<div class="section-title">
+إدارة الاختبارات
 </div>
+
+<button
+class="primary-btn"
+onclick="openModal('exam')"
+>
+إضافة اختبار
+</button>
+
+</div>
+
+<table>
+
+<thead>
+
+<tr>
+<th>الترتيب</th>
+<th>الاختبار</th>
+<th>الدرجة النهائية</th>
+<th>الإجراءات</th>
+</tr>
+
+</thead>
+
+<tbody id="examsTable"></tbody>
+
+</table>
+
+</div>
+
+<!-- =========================
+     الأرشيف
+========================= -->
 
 <div class="section" id="archiveSection">
-  <div class="section-header">
-    <div class="section-title">الأرشيف</div>
-  </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>العنصر</th>
-        <th>النوع</th>
-        <th>تاريخ الأرشفة</th>
-      </tr>
-    </thead>
-    <tbody id="archiveTable"></tbody>
-  </table>
+<div class="section-header">
+<div class="section-title">
+الأرشيف
+</div>
+</div>
+
+<table>
+
+<thead>
+
+<tr>
+<th>العنصر</th>
+<th>النوع</th>
+<th>تاريخ الأرشفة</th>
+</tr>
+
+</thead>
+
+<tbody id="archiveTable"></tbody>
+
+</table>
+
 </div>
 
 </div>
 
 </div>
+
+<!-- =========================
+     Modal
+========================= -->
 
 <div class="modal" id="modal">
-  <div class="modal-content">
 
-    <div class="modal-title" id="modalTitle">إضافة</div>
+<div class="modal-content">
 
-    <div class="input-group" id="nameGroup">
-      <input type="text" id="nameInput" placeholder="الاسم"/>
-    </div>
+<div
+class="modal-title"
+id="modalTitle"
+>
+إضافة
+</div>
 
-    <div class="input-group hidden" id="usernameGroup">
-      <input type="text" id="usernameInput" placeholder="Username"/>
-    </div>
+<div
+class="input-group"
+id="nameGroup"
+>
+<input
+type="text"
+id="nameInput"
+placeholder="الاسم"
+/>
+</div>
 
-    <div class="input-group hidden" id="passwordGroup">
-      <input type="text" id="passwordInput" placeholder="Password"/>
-    </div>
+<div
+class="input-group hidden"
+id="usernameGroup"
+>
+<input
+type="text"
+id="usernameInput"
+placeholder="Username"
+/>
+</div>
 
-    <div class="input-group hidden" id="phoneGroup">
-      <input type="text" id="phoneInput" placeholder="رقم ولي الأمر"/>
-    </div>
+<div
+class="input-group hidden"
+id="passwordGroup"
+>
+<input
+type="text"
+id="passwordInput"
+placeholder="Password"
+/>
+</div>
 
-    <div class="input-group hidden" id="classGroup">
-      <select id="classSelect"></select>
-    </div>
+<div
+class="input-group hidden"
+id="phoneGroup"
+>
+<input
+type="text"
+id="phoneInput"
+placeholder="رقم ولي الأمر"
+/>
+</div>
 
-    <div class="input-group hidden" id="teacherGroup">
-      <select id="teacherSelect"></select>
-    </div>
+<div
+class="input-group hidden"
+id="classGroup"
+>
+<select id="classSelect"></select>
+</div>
 
-    <div class="input-group hidden" id="degreeGroup">
-      <input type="number" id="degreeInput" placeholder="الدرجة النهائية"/>
-    </div>
+<div
+class="input-group hidden"
+id="degreeGroup"
+>
+<input
+type="number"
+id="degreeInput"
+placeholder="الدرجة النهائية"
+/>
+</div>
 
-    <div class="modal-actions">
-      <button class="save-btn" onclick="saveData()">حفظ</button>
-      <button class="cancel-btn" onclick="closeModal()">إلغاء</button>
-    </div>
+<div class="modal-actions">
 
-  </div>
+<button
+class="save-btn"
+onclick="saveData()"
+>
+حفظ
+</button>
+
+<button
+class="cancel-btn"
+onclick="closeModal()"
+>
+إلغاء
+</button>
+
+</div>
+
+</div>
+
 </div>
 
 <script type="module">
@@ -258,697 +703,2632 @@
 import { db } from "./firebase.js";
 
 import {
-  collection,
-  addDoc,
-  getDocs,
-  deleteDoc,
-  updateDoc,
-  doc
-} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
-
-if (localStorage.getItem("rasedRole") !== "admin") {
-  window.location.href = "index.html";
+collection,
+addDoc,
+getDocs,
+deleteDoc,
+updateDoc,
+doc
 }
+from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+
+if(
+localStorage.getItem("rasedRole") !== "admin"
+){
+window.location.href = "index.html";
+}
+
+/* ================================
+   Variables
+================================ */
 
 let currentType = "";
 let editId = null;
 
-const modal = document.getElementById("modal");
+let cachedTeachers = [];
+let cachedClasses = [];
+let cachedAssignments = [];
 
-window.showSection = function(id) {
-  document.querySelectorAll(".section").forEach(section => {
-    section.classList.remove("active-section");
-  });
+const modal =
+document.getElementById("modal");
 
-  document.getElementById(id).classList.add("active-section");
-};
+const bulkTeacherSelect =
+document.getElementById("bulkTeacherSelect");
 
-window.openModal = async function(type, id = null, data = {}) {
-  currentType = type;
-  editId = id;
+const classesCheckboxArea =
+document.getElementById("classesCheckboxArea");
 
-  modal.style.display = "flex";
+/* ================================
+   Sections
+================================ */
 
-  document.getElementById("nameInput").value = data.name || data.examName || "";
-  document.getElementById("usernameInput").value = data.username || "";
-  document.getElementById("passwordInput").value = data.password || "";
-  document.getElementById("phoneInput").value = data.guardianPhone || data.phone || "";
-  document.getElementById("degreeInput").value = data.maxDegree || "";
+window.showSection = function(id){
 
-  document.getElementById("nameGroup").classList.remove("hidden");
-  document.getElementById("usernameGroup").classList.add("hidden");
-  document.getElementById("passwordGroup").classList.add("hidden");
-  document.getElementById("phoneGroup").classList.add("hidden");
-  document.getElementById("classGroup").classList.add("hidden");
-  document.getElementById("teacherGroup").classList.add("hidden");
-  document.getElementById("degreeGroup").classList.add("hidden");
+document
+.querySelectorAll(".section")
+.forEach(section=>{
 
-  if (type === "teacher") {
-    document.getElementById("modalTitle").innerText = id ? "تعديل معلم" : "إضافة معلم";
-    document.getElementById("usernameGroup").classList.remove("hidden");
-    document.getElementById("passwordGroup").classList.remove("hidden");
-  }
+section.classList.remove(
+"active-section"
+);
 
-  if (type === "supervisor") {
-    document.getElementById("modalTitle").innerText = id ? "تعديل مشرف" : "إضافة مشرف";
-    document.getElementById("usernameGroup").classList.remove("hidden");
-    document.getElementById("passwordGroup").classList.remove("hidden");
-  }
-
-  if (type === "class") {
-    document.getElementById("modalTitle").innerText = id ? "تعديل فصل" : "إضافة فصل";
-  }
-
-  if (type === "student") {
-    document.getElementById("modalTitle").innerText = id ? "تعديل طالب" : "إضافة طالب";
-    document.getElementById("classGroup").classList.remove("hidden");
-    document.getElementById("phoneGroup").classList.remove("hidden");
-
-    await loadClassOptions();
-
-    if (data.className) {
-      document.getElementById("classSelect").value = data.className;
-    }
-  }
-
-  if (type === "assignment") {
-    document.getElementById("modalTitle").innerText = id ? "تعديل إسناد" : "إسناد فصل";
-    document.getElementById("nameGroup").classList.add("hidden");
-    document.getElementById("classGroup").classList.remove("hidden");
-    document.getElementById("teacherGroup").classList.remove("hidden");
-
-    await loadClassOptions();
-    await loadTeacherOptions();
-
-    if (data.className) {
-      document.getElementById("classSelect").value = data.className;
-    }
-
-    if (data.teacherName) {
-      document.getElementById("teacherSelect").value = data.teacherName;
-    }
-  }
-
-  if (type === "exam") {
-    document.getElementById("modalTitle").innerText = id ? "تعديل اختبار" : "إضافة اختبار";
-    document.getElementById("degreeGroup").classList.remove("hidden");
-  }
-};
-
-window.closeModal = function() {
-  modal.style.display = "none";
-  editId = null;
-};
-
-window.saveData = async function() {
-  const name = document.getElementById("nameInput").value.trim();
-  const username = document.getElementById("usernameInput").value.trim();
-  const password = document.getElementById("passwordInput").value.trim();
-  const guardianPhone = document.getElementById("phoneInput").value.trim();
-  const className = document.getElementById("classSelect").value;
-  const teacherName = document.getElementById("teacherSelect").value;
-  const maxDegree = document.getElementById("degreeInput").value.trim();
-
-  if (currentType !== "assignment" && !name) {
-    alert("أدخل الاسم");
-    return;
-  }
-
-  if (currentType === "teacher") {
-    const payload = { name, username, password };
-
-    if (editId) {
-      await updateDoc(doc(db, "teachers", editId), payload);
-    } else {
-      await addDoc(collection(db, "teachers"), payload);
-    }
-
-    await loadTeachers();
-  }
-
-  if (currentType === "supervisor") {
-    const payload = { name, username, password };
-
-    if (editId) {
-      await updateDoc(doc(db, "supervisors", editId), payload);
-    } else {
-      await addDoc(collection(db, "supervisors"), payload);
-    }
-
-    await loadSupervisors();
-  }
-
-  if (currentType === "class") {
-    const payload = { name };
-
-    if (editId) {
-      await updateDoc(doc(db, "classes", editId), payload);
-    } else {
-      await addDoc(collection(db, "classes"), payload);
-    }
-
-    await loadClasses();
-  }
-
-  if (currentType === "student") {
-    const payload = {
-      name,
-      className,
-      guardianPhone
-    };
-
-    if (editId) {
-      await updateDoc(doc(db, "students", editId), payload);
-    } else {
-      await addDoc(collection(db, "students"), payload);
-    }
-
-    await loadStudents();
-  }
-
-  if (currentType === "assignment") {
-    const payload = {
-      className,
-      teacherName
-    };
-
-    if (editId) {
-      await updateDoc(doc(db, "assignments", editId), payload);
-    } else {
-      await addDoc(collection(db, "assignments"), payload);
-    }
-
-    await loadAssignments();
-  }
-
-  if (currentType === "exam") {
-    if (!maxDegree) {
-      alert("أدخل الدرجة النهائية");
-      return;
-    }
-
-    let order = 1;
-
-    if (!editId) {
-      const examsSnapshot = await getDocs(collection(db, "exams"));
-      order = examsSnapshot.size + 1;
-    }
-
-    const payload = {
-      examName: name,
-      maxDegree: Number(maxDegree)
-    };
-
-    if (editId) {
-      await updateDoc(doc(db, "exams", editId), payload);
-    } else {
-      await addDoc(collection(db, "exams"), {
-        ...payload,
-        order
-      });
-    }
-
-    await loadExams();
-  }
-
-  closeModal();
-};
-
-async function archiveItem(name, type) {
-  await addDoc(collection(db, "adminArchive"), {
-    name,
-    type,
-    archivedAt: new Date().toLocaleString()
-  });
-
-  await loadArchive();
-}
-
-async function loadTeachers() {
-  const table = document.getElementById("teachersTable");
-  table.innerHTML = "";
-
-  const snapshot = await getDocs(collection(db, "teachers"));
-
-  const teachers = [];
-
-  snapshot.forEach(item => {
-    teachers.push({
-      id: item.id,
-      ...item.data()
-    });
-  });
-
-  teachers.sort((a, b) =>
-    (a.name || "").localeCompare(b.name || "", "ar")
-  );
-
-  let html = "";
-
-  teachers.forEach(data => {
-    html += `
-      <tr>
-        <td class="teacher-name">${data.name || ""}</td>
-        <td>${data.username || ""}</td>
-        <td>${data.password || ""}</td>
-        <td>
-          <button class="action-btn edit-btn" onclick='openModal("teacher","${data.id}",${JSON.stringify(data)})'>تعديل</button>
-          <button class="action-btn delete-btn" onclick="deleteTeacher('${data.id}','${data.name || ""}')">حذف</button>
-        </td>
-      </tr>
-    `;
-  });
-
-  table.innerHTML = html;
-
-  document.getElementById("teachersCount").innerText = teachers.length;
-}
-
-window.deleteTeacher = async function(id, name) {
-  await archiveItem(name, "معلم");
-  await deleteDoc(doc(db, "teachers", id));
-  await loadTeachers();
-};
-
-async function loadSupervisors() {
-  const table = document.getElementById("supervisorsTable");
-  table.innerHTML = "";
-
-  const snapshot = await getDocs(collection(db, "supervisors"));
-
-  const supervisors = [];
-
-  snapshot.forEach(item => {
-    supervisors.push({
-      id: item.id,
-      ...item.data()
-    });
-  });
-
-  supervisors.sort((a, b) =>
-    (a.name || "").localeCompare(b.name || "", "ar")
-  );
-
-  let html = "";
-
-  supervisors.forEach(data => {
-    html += `
-      <tr>
-        <td>${data.name || ""}</td>
-        <td>${data.username || ""}</td>
-        <td>${data.password || ""}</td>
-        <td>
-          <button class="action-btn edit-btn" onclick='openModal("supervisor","${data.id}",${JSON.stringify(data)})'>تعديل</button>
-          <button class="action-btn delete-btn" onclick="deleteSupervisor('${data.id}','${data.name || ""}')">حذف</button>
-        </td>
-      </tr>
-    `;
-  });
-
-  table.innerHTML = html;
-
-  document.getElementById("supervisorsCount").innerText = supervisors.length;
-}
-
-window.deleteSupervisor = async function(id, name) {
-  await archiveItem(name, "مشرف");
-  await deleteDoc(doc(db, "supervisors", id));
-  await loadSupervisors();
-};
-
-async function loadClasses() {
-  const table = document.getElementById("classesTable");
-  table.innerHTML = "";
-
-  const snapshot = await getDocs(collection(db, "classes"));
-
-  const classes = [];
-
-  snapshot.forEach(item => {
-    classes.push({
-      id: item.id,
-      ...item.data()
-    });
-  });
-
-  classes.sort((a, b) =>
-    (a.name || "").localeCompare(b.name || "", "ar")
-  );
-
-  let html = "";
-
-  classes.forEach(data => {
-    html += `
-      <tr>
-        <td class="class-name">${data.name || ""}</td>
-        <td>
-          <button class="action-btn edit-btn" onclick='openModal("class","${data.id}",${JSON.stringify(data)})'>تعديل</button>
-          <button class="action-btn delete-btn" onclick="deleteClass('${data.id}','${data.name || ""}')">حذف</button>
-        </td>
-      </tr>
-    `;
-  });
-
-  table.innerHTML = html;
-
-  document.getElementById("classesCount").innerText = classes.length;
-}
-
-window.deleteClass = async function(id, name) {
-  await archiveItem(name, "فصل");
-  await deleteDoc(doc(db, "classes", id));
-  await loadClasses();
-};
-
-async function loadStudents() {
-  const table = document.getElementById("studentsTable");
-
-  table.innerHTML = `
-    <tr class="loading-row">
-      <td colspan="4">جاري تحميل الطلاب...</td>
-    </tr>
-  `;
-
-  const snapshot = await getDocs(collection(db, "students"));
-
-  const students = [];
-
-  snapshot.forEach(item => {
-    students.push({
-      id: item.id,
-      ...item.data()
-    });
-  });
-
-  students.sort((a, b) => {
-    if ((a.className || "") < (b.className || "")) return -1;
-    if ((a.className || "") > (b.className || "")) return 1;
-
-    return (a.name || "").localeCompare(b.name || "", "ar");
-  });
-
-  let currentClass = "";
-  let html = "";
-
-  students.forEach(student => {
-    if ((student.className || "") !== currentClass) {
-      currentClass = student.className || "بدون فصل";
-
-      html += `
-        <tr class="class-divider">
-          <td colspan="4">${currentClass}</td>
-        </tr>
-      `;
-    }
-
-    html += `
-      <tr>
-        <td class="student-name" style="padding:8px 12px;font-size:13px;">${student.name || ""}</td>
-        <td style="padding:8px;font-size:12px;">${student.className || ""}</td>
-        <td style="padding:8px;font-size:12px;direction:ltr;">${student.guardianPhone || ""}</td>
-        <td style="padding:6px;">
-          <button class="action-btn edit-btn" style="padding:5px 9px;font-size:12px;" onclick='openModal("student","${student.id}",${JSON.stringify(student)})'>تعديل</button>
-          <button class="action-btn delete-btn" style="padding:5px 9px;font-size:12px;" onclick="deleteStudent('${student.id}','${student.name || ""}')">حذف</button>
-        </td>
-      </tr>
-    `;
-  });
-
-  table.innerHTML = html;
-
-  document.getElementById("studentsCount").innerText = students.length;
-}
-
-window.deleteStudent = async function(id, name) {
-  await archiveItem(name, "طالب");
-  await deleteDoc(doc(db, "students", id));
-  await loadStudents();
-};
-
-window.deleteAllStudents = async function() {
-  const confirmDelete = confirm(
-    "هل أنت متأكد من حذف جميع الطلاب؟"
-  );
-
-  if (!confirmDelete) return;
-
-  const secondConfirm = confirm(
-    "تنبيه: سيتم حذف جميع الطلاب نهائيًا. هل تريد المتابعة؟"
-  );
-
-  if (!secondConfirm) return;
-
-  try {
-    const table = document.getElementById("studentsTable");
-
-    table.innerHTML = `
-      <tr class="loading-row">
-        <td colspan="4">جاري حذف جميع الطلاب...</td>
-      </tr>
-    `;
-
-    const snapshot = await getDocs(collection(db, "students"));
-
-    const batchSize = 25;
-    const docs = snapshot.docs;
-
-    for (let i = 0; i < docs.length; i += batchSize) {
-      const currentBatch = docs.slice(i, i + batchSize);
-
-      await Promise.all(
-        currentBatch.map(item =>
-          deleteDoc(doc(db, "students", item.id))
-        )
-      );
-    }
-
-    alert("تم حذف جميع الطلاب بنجاح");
-
-    await loadStudents();
-  }
-
-  catch(error) {
-    console.error(error);
-    alert("حدث خطأ أثناء حذف جميع الطلاب");
-    await loadStudents();
-  }
-};
-
-async function loadAssignments() {
-  const table = document.getElementById("assignmentsTable");
-  table.innerHTML = "";
-
-  const snapshot = await getDocs(collection(db, "assignments"));
-
-  let html = "";
-
-  snapshot.forEach(item => {
-    const data = item.data();
-
-    html += `
-      <tr>
-        <td>${data.className || ""}</td>
-        <td>${data.teacherName || ""}</td>
-        <td>
-          <button class="action-btn edit-btn" onclick='openModal("assignment","${item.id}",${JSON.stringify(data)})'>تعديل</button>
-          <button class="action-btn delete-btn" onclick="deleteAssignment('${item.id}','${data.className || ""}')">حذف</button>
-        </td>
-      </tr>
-    `;
-  });
-
-  table.innerHTML = html;
-}
-
-window.deleteAssignment = async function(id, name) {
-  await archiveItem(name, "إسناد");
-  await deleteDoc(doc(db, "assignments", id));
-  await loadAssignments();
-};
-
-async function loadExams() {
-  const table = document.getElementById("examsTable");
-  table.innerHTML = "";
-
-  const snapshot = await getDocs(collection(db, "exams"));
-
-  let exams = [];
-
-  snapshot.forEach(item => {
-    exams.push({
-      id: item.id,
-      ...item.data()
-    });
-  });
-
-  exams.sort((a, b) =>
-    Number(a.order || 999) - Number(b.order || 999)
-  );
-
-  let html = "";
-
-  exams.forEach(exam => {
-    html += `
-      <tr>
-        <td>${exam.order || "-"}</td>
-        <td>${exam.examName || ""}</td>
-        <td>${exam.maxDegree || ""}</td>
-        <td>
-          <button class="action-btn edit-btn" onclick='openModal("exam","${exam.id}",${JSON.stringify(exam)})'>تعديل</button>
-          <button class="action-btn delete-btn" onclick="deleteExam('${exam.id}','${exam.examName || ""}')">حذف</button>
-        </td>
-      </tr>
-    `;
-  });
-
-  table.innerHTML = html;
-}
-
-window.deleteExam = async function(id, name) {
-  await archiveItem(name, "اختبار");
-  await deleteDoc(doc(db, "exams", id));
-  await loadExams();
-};
-
-async function loadArchive() {
-  const table = document.getElementById("archiveTable");
-  table.innerHTML = "";
-
-  const snapshot = await getDocs(collection(db, "adminArchive"));
-
-  let html = "";
-
-  snapshot.forEach(item => {
-    const data = item.data();
-
-    html += `
-      <tr>
-        <td>${data.name || ""}</td>
-        <td>${data.type || ""}</td>
-        <td>${data.archivedAt || ""}</td>
-      </tr>
-    `;
-  });
-
-  table.innerHTML = html;
-}
-
-async function loadClassOptions() {
-  const select = document.getElementById("classSelect");
-
-  select.innerHTML = "";
-
-  const snapshot = await getDocs(collection(db, "classes"));
-
-  const classes = [];
-
-  snapshot.forEach(item => {
-    classes.push(item.data());
-  });
-
-  classes.sort((a, b) =>
-    (a.name || "").localeCompare(b.name || "", "ar")
-  );
-
-  classes.forEach(item => {
-    select.innerHTML += `<option>${item.name}</option>`;
-  });
-}
-
-async function loadTeacherOptions() {
-  const select = document.getElementById("teacherSelect");
-
-  select.innerHTML = "";
-
-  const snapshot = await getDocs(collection(db, "teachers"));
-
-  const teachers = [];
-
-  snapshot.forEach(item => {
-    teachers.push(item.data());
-  });
-
-  teachers.sort((a, b) =>
-    (a.name || "").localeCompare(b.name || "", "ar")
-  );
-
-  teachers.forEach(item => {
-    select.innerHTML += `<option>${item.name}</option>`;
-  });
-}
-
-document.getElementById("excelFile").addEventListener("change", event => {
-  const file = event.target.files[0];
-
-  if (!file) return;
-
-  const reader = new FileReader();
-
-  reader.onload = async(e) => {
-    const data = new Uint8Array(e.target.result);
-
-    const workbook = XLSX.read(data, {
-      type: "array"
-    });
-
-    const sheet = workbook.Sheets[
-      workbook.SheetNames[0]
-    ];
-
-    const rows = XLSX.utils.sheet_to_json(sheet, {
-      header: 1,
-      raw: false
-    });
-
-    const studentsToAdd = [];
-
-    for (let i = 1; i < rows.length; i++) {
-      if (!rows[i][0]) continue;
-
-      studentsToAdd.push({
-        name: String(rows[i][0] || "").trim(),
-        className: String(rows[i][1] || "").trim(),
-        guardianPhone: String(rows[i][2] || "").trim()
-      });
-    }
-
-    const batchSize = 25;
-
-    for (let i = 0; i < studentsToAdd.length; i += batchSize) {
-      const currentBatch = studentsToAdd.slice(i, i + batchSize);
-
-      await Promise.all(
-        currentBatch.map(student =>
-          addDoc(collection(db, "students"), student)
-        )
-      );
-    }
-
-    alert("تم استيراد الطلاب مع أرقام أولياء الأمور");
-
-    await loadStudents();
-
-    event.target.value = "";
-  };
-
-  reader.readAsArrayBuffer(file);
 });
 
-window.logout = function() {
-  localStorage.clear();
-  window.location.href = "index.html";
+document
+.getElementById(id)
+.classList.add(
+"active-section"
+);
+
+if(
+id === "assignmentsSection"
+){
+
+refreshAssignmentPage();
+
+}
+
 };
 
+/* ================================
+   Modal
+================================ */
+
+window.openModal =
+async function(
+type,
+id = null,
+data = {}
+){
+
+currentType = type;
+editId = id;
+
+modal.style.display =
+"flex";
+
+document
+.getElementById("nameInput")
+.value =
+data.name ||
+data.examName ||
+"";
+
+document
+.getElementById("usernameInput")
+.value =
+data.username || "";
+
+document
+.getElementById("passwordInput")
+.value =
+data.password || "";
+
+document
+.getElementById("phoneInput")
+.value =
+data.guardianPhone ||
+data.phone ||
+"";
+
+document
+.getElementById("degreeInput")
+.value =
+data.maxDegree || "";
+
+document
+.getElementById("nameGroup")
+.classList.remove("hidden");
+
+document
+.getElementById("usernameGroup")
+.classList.add("hidden");
+
+document
+.getElementById("passwordGroup")
+.classList.add("hidden");
+
+document
+.getElementById("phoneGroup")
+.classList.add("hidden");
+
+document
+.getElementById("classGroup")
+.classList.add("hidden");
+
+document
+.getElementById("degreeGroup")
+.classList.add("hidden");
+
+/* Teacher */
+
+if(type === "teacher"){
+
+document
+.getElementById("modalTitle")
+.innerText =
+id
+?
+"تعديل معلم"
+:
+"إضافة معلم";
+
+document
+.getElementById("usernameGroup")
+.classList.remove("hidden");
+
+document
+.getElementById("passwordGroup")
+.classList.remove("hidden");
+
+}
+
+/* Supervisor */
+
+if(type === "supervisor"){
+
+document
+.getElementById("modalTitle")
+.innerText =
+id
+?
+"تعديل مشرف"
+:
+"إضافة مشرف";
+
+document
+.getElementById("usernameGroup")
+.classList.remove("hidden");
+
+document
+.getElementById("passwordGroup")
+.classList.remove("hidden");
+
+}
+
+/* Class */
+
+if(type === "class"){
+
+document
+.getElementById("modalTitle")
+.innerText =
+id
+?
+"تعديل فصل"
+:
+"إضافة فصل";
+
+}
+
+/* Student */
+
+if(type === "student"){
+
+document
+.getElementById("modalTitle")
+.innerText =
+id
+?
+"تعديل طالب"
+:
+"إضافة طالب";
+
+document
+.getElementById("classGroup")
+.classList.remove("hidden");
+
+document
+.getElementById("phoneGroup")
+.classList.remove("hidden");
+
+await loadClassOptions();
+
+if(data.className){
+
+document
+.getElementById("classSelect")
+.value =
+data.className;
+
+}
+
+}
+
+/* Exam */
+
+if(type === "exam"){
+
+document
+.getElementById("modalTitle")
+.innerText =
+id
+?
+"تعديل اختبار"
+:
+"إضافة اختبار";
+
+document
+.getElementById("degreeGroup")
+.classList.remove("hidden");
+
+}
+
+};
+
+window.closeModal =
+function(){
+
+modal.style.display =
+"none";
+
+editId = null;
+
+};
+
+/* ================================
+   Save Modal Data
+================================ */
+
+window.saveData =
+async function(){
+
+const name =
+document
+.getElementById("nameInput")
+.value
+.trim();
+
+const username =
+document
+.getElementById("usernameInput")
+.value
+.trim();
+
+const password =
+document
+.getElementById("passwordInput")
+.value
+.trim();
+
+const guardianPhone =
+document
+.getElementById("phoneInput")
+.value
+.trim();
+
+const className =
+document
+.getElementById("classSelect")
+.value;
+
+const maxDegree =
+document
+.getElementById("degreeInput")
+.value
+.trim();
+
+if(!name){
+
+alert(
+"أدخل الاسم"
+);
+
+return;
+
+}
+
+/* Teacher */
+
+if(
+currentType === "teacher"
+){
+
+const payload = {
+name,
+username,
+password
+};
+
+if(editId){
+
+await updateDoc(
+doc(
+db,
+"teachers",
+editId
+),
+payload
+);
+
+}else{
+
+await addDoc(
+collection(
+db,
+"teachers"
+),
+payload
+);
+
+}
+
 await loadTeachers();
+await refreshAssignmentPage();
+
+}
+
+/* Supervisor */
+
+if(
+currentType === "supervisor"
+){
+
+const payload = {
+name,
+username,
+password
+};
+
+if(editId){
+
+await updateDoc(
+doc(
+db,
+"supervisors",
+editId
+),
+payload
+);
+
+}else{
+
+await addDoc(
+collection(
+db,
+"supervisors"
+),
+payload
+);
+
+}
+
 await loadSupervisors();
+
+}
+
+/* Class */
+
+if(
+currentType === "class"
+){
+
+const payload = {
+name
+};
+
+if(editId){
+
+await updateDoc(
+doc(
+db,
+"classes",
+editId
+),
+payload
+);
+
+}else{
+
+await addDoc(
+collection(
+db,
+"classes"
+),
+payload
+);
+
+}
+
 await loadClasses();
+await refreshAssignmentPage();
+
+}
+
+/* Student */
+
+if(
+currentType === "student"
+){
+
+const payload = {
+name,
+className,
+guardianPhone
+};
+
+if(editId){
+
+await updateDoc(
+doc(
+db,
+"students",
+editId
+),
+payload
+);
+
+}else{
+
+await addDoc(
+collection(
+db,
+"students"
+),
+payload
+);
+
+}
+
 await loadStudents();
-await loadAssignments();
+
+}
+
+/* Exam */
+
+if(
+currentType === "exam"
+){
+
+if(!maxDegree){
+
+alert(
+"أدخل الدرجة النهائية"
+);
+
+return;
+
+}
+
+let order = 1;
+
+if(!editId){
+
+const examsSnapshot =
+await getDocs(
+collection(
+db,
+"exams"
+)
+);
+
+order =
+examsSnapshot.size + 1;
+
+}
+
+const payload = {
+examName:name,
+maxDegree:Number(
+maxDegree
+)
+};
+
+if(editId){
+
+await updateDoc(
+doc(
+db,
+"exams",
+editId
+),
+payload
+);
+
+}else{
+
+await addDoc(
+collection(
+db,
+"exams"
+),
+{
+...payload,
+order
+}
+);
+
+}
+
 await loadExams();
+
+}
+
+closeModal();
+
+};
+
+/* ================================
+   Archive
+================================ */
+
+async function archiveItem(
+name,
+type
+){
+
+await addDoc(
+collection(
+db,
+"adminArchive"
+),
+{
+name,
+type,
+archivedAt:
+new Date()
+.toLocaleString()
+}
+);
+
+}
+
+/* ================================
+   Teachers
+================================ */
+
+async function loadTeachers(){
+
+const table =
+document
+.getElementById(
+"teachersTable"
+);
+
+table.innerHTML = "";
+
+const snapshot =
+await getDocs(
+collection(
+db,
+"teachers"
+)
+);
+
+const teachers = [];
+
+snapshot.forEach(item=>{
+
+teachers.push({
+id:item.id,
+...item.data()
+});
+
+});
+
+teachers.sort(
+(a,b)=>
+(a.name || "")
+.localeCompare(
+b.name || "",
+"ar"
+)
+);
+
+cachedTeachers =
+teachers;
+
+let html = "";
+
+teachers.forEach(data=>{
+
+html += `
+<tr>
+
+<td class="teacher-name">
+${data.name || ""}
+</td>
+
+<td>
+${data.username || ""}
+</td>
+
+<td>
+${data.password || ""}
+</td>
+
+<td>
+
+<button
+class="action-btn edit-btn"
+onclick='openModal(
+"teacher",
+"${data.id}",
+${JSON.stringify(data)}
+)'
+>
+تعديل
+</button>
+
+<button
+class="action-btn delete-btn"
+onclick="deleteTeacher(
+'${data.id}',
+'${data.name || ""}'
+)"
+>
+حذف
+</button>
+
+</td>
+
+</tr>
+`;
+
+});
+
+table.innerHTML = html;
+
+document
+.getElementById(
+"teachersCount"
+)
+.innerText =
+teachers.length;
+
+}
+
+/* Delete one teacher */
+
+window.deleteTeacher =
+async function(
+id,
+name
+){
+
+const ok =
+confirm(
+`هل أنت متأكد من حذف المعلم:\n${name} ؟`
+);
+
+if(!ok) return;
+
+/* حذف إسنادات المعلم */
+
+const assignmentsSnapshot =
+await getDocs(
+collection(
+db,
+"assignments"
+)
+);
+
+const related =
+assignmentsSnapshot.docs
+.filter(item=>
+item.data().teacherName === name
+);
+
+await Promise.all(
+related.map(item=>
+deleteDoc(
+doc(
+db,
+"assignments",
+item.id
+)
+)
+)
+);
+
+await archiveItem(
+name,
+"معلم"
+);
+
+await deleteDoc(
+doc(
+db,
+"teachers",
+id
+)
+);
+
+await loadTeachers();
+await refreshAssignmentPage();
+
+};
+
+/* Delete ALL teachers */
+
+window.deleteAllTeachers =
+async function(){
+
+const first =
+confirm(
+"هل أنت متأكد من حذف جميع المعلمين؟"
+);
+
+if(!first) return;
+
+const second =
+confirm(
+"تنبيه: سيتم حذف جميع المعلمين وجميع إسناداتهم. هل تريد المتابعة؟"
+);
+
+if(!second) return;
+
+try{
+
+const teachersSnapshot =
+await getDocs(
+collection(
+db,
+"teachers"
+)
+);
+
+const assignmentsSnapshot =
+await getDocs(
+collection(
+db,
+"assignments"
+)
+);
+
+/* حذف الإسنادات */
+
+await Promise.all(
+assignmentsSnapshot.docs
+.map(item=>
+deleteDoc(
+doc(
+db,
+"assignments",
+item.id
+)
+)
+)
+);
+
+/* حذف المعلمين */
+
+await Promise.all(
+teachersSnapshot.docs
+.map(item=>
+deleteDoc(
+doc(
+db,
+"teachers",
+item.id
+)
+)
+)
+);
+
+alert(
+"تم حذف جميع المعلمين وإسناداتهم بنجاح"
+);
+
+await loadTeachers();
+await refreshAssignmentPage();
+
+}catch(error){
+
+console.error(error);
+
+alert(
+"حدث خطأ أثناء حذف المعلمين"
+);
+
+}
+
+};
+
+/* ================================
+   Supervisors
+================================ */
+
+async function loadSupervisors(){
+
+const table =
+document
+.getElementById(
+"supervisorsTable"
+);
+
+table.innerHTML = "";
+
+const snapshot =
+await getDocs(
+collection(
+db,
+"supervisors"
+)
+);
+
+const supervisors = [];
+
+snapshot.forEach(item=>{
+
+supervisors.push({
+id:item.id,
+...item.data()
+});
+
+});
+
+supervisors.sort(
+(a,b)=>
+(a.name || "")
+.localeCompare(
+b.name || "",
+"ar"
+)
+);
+
+let html = "";
+
+supervisors.forEach(data=>{
+
+html += `
+<tr>
+
+<td>
+${data.name || ""}
+</td>
+
+<td>
+${data.username || ""}
+</td>
+
+<td>
+${data.password || ""}
+</td>
+
+<td>
+
+<button
+class="action-btn edit-btn"
+onclick='openModal(
+"supervisor",
+"${data.id}",
+${JSON.stringify(data)}
+)'
+>
+تعديل
+</button>
+
+<button
+class="action-btn delete-btn"
+onclick="deleteSupervisor(
+'${data.id}',
+'${data.name || ""}'
+)"
+>
+حذف
+</button>
+
+</td>
+
+</tr>
+`;
+
+});
+
+table.innerHTML = html;
+
+document
+.getElementById(
+"supervisorsCount"
+)
+.innerText =
+supervisors.length;
+
+}
+
+window.deleteSupervisor =
+async function(
+id,
+name
+){
+
+const ok =
+confirm(
+`هل أنت متأكد من حذف المشرف:\n${name} ؟`
+);
+
+if(!ok) return;
+
+await archiveItem(
+name,
+"مشرف"
+);
+
+await deleteDoc(
+doc(
+db,
+"supervisors",
+id
+)
+);
+
+await loadSupervisors();
+
+};
+
+/* ================================
+   Classes
+================================ */
+
+async function loadClasses(){
+
+const table =
+document
+.getElementById(
+"classesTable"
+);
+
+table.innerHTML = "";
+
+const snapshot =
+await getDocs(
+collection(
+db,
+"classes"
+)
+);
+
+const classes = [];
+
+snapshot.forEach(item=>{
+
+classes.push({
+id:item.id,
+...item.data()
+});
+
+});
+
+classes.sort(
+(a,b)=>
+(a.name || "")
+.localeCompare(
+b.name || "",
+"ar"
+)
+);
+
+cachedClasses =
+classes;
+
+let html = "";
+
+classes.forEach(data=>{
+
+html += `
+<tr>
+
+<td class="class-name">
+${data.name || ""}
+</td>
+
+<td>
+
+<button
+class="action-btn edit-btn"
+onclick='openModal(
+"class",
+"${data.id}",
+${JSON.stringify(data)}
+)'
+>
+تعديل
+</button>
+
+<button
+class="action-btn delete-btn"
+onclick="deleteClass(
+'${data.id}',
+'${data.name || ""}'
+)"
+>
+حذف
+</button>
+
+</td>
+
+</tr>
+`;
+
+});
+
+table.innerHTML = html;
+
+document
+.getElementById(
+"classesCount"
+)
+.innerText =
+classes.length;
+
+}
+
+window.deleteClass =
+async function(
+id,
+name
+){
+
+const ok =
+confirm(
+`هل أنت متأكد من حذف الفصل:\n${name} ؟`
+);
+
+if(!ok) return;
+
+/* حذف إسنادات الفصل */
+
+const assignmentsSnapshot =
+await getDocs(
+collection(
+db,
+"assignments"
+)
+);
+
+const related =
+assignmentsSnapshot.docs
+.filter(item=>
+item.data().className === name
+);
+
+await Promise.all(
+related.map(item=>
+deleteDoc(
+doc(
+db,
+"assignments",
+item.id
+)
+)
+)
+);
+
+await archiveItem(
+name,
+"فصل"
+);
+
+await deleteDoc(
+doc(
+db,
+"classes",
+id
+)
+);
+
+await loadClasses();
+await refreshAssignmentPage();
+
+};
+
+/* Delete ALL classes */
+
+window.deleteAllClasses =
+async function(){
+
+const first =
+confirm(
+"هل أنت متأكد من حذف جميع الفصول؟"
+);
+
+if(!first) return;
+
+const second =
+confirm(
+"تنبيه: سيتم حذف جميع الفصول وجميع الإسنادات المرتبطة بها. الطلاب لن يتم حذفهم. هل تريد المتابعة؟"
+);
+
+if(!second) return;
+
+try{
+
+const classesSnapshot =
+await getDocs(
+collection(
+db,
+"classes"
+)
+);
+
+const assignmentsSnapshot =
+await getDocs(
+collection(
+db,
+"assignments"
+)
+);
+
+await Promise.all(
+assignmentsSnapshot.docs
+.map(item=>
+deleteDoc(
+doc(
+db,
+"assignments",
+item.id
+)
+)
+)
+);
+
+await Promise.all(
+classesSnapshot.docs
+.map(item=>
+deleteDoc(
+doc(
+db,
+"classes",
+item.id
+)
+)
+)
+);
+
+alert(
+"تم حذف جميع الفصول والإسنادات بنجاح"
+);
+
+await loadClasses();
+await refreshAssignmentPage();
+
+}catch(error){
+
+console.error(error);
+
+alert(
+"حدث خطأ أثناء حذف الفصول"
+);
+
+}
+
+};
+
+/* ================================
+   Students
+================================ */
+
+async function loadStudents(){
+
+const table =
+document
+.getElementById(
+"studentsTable"
+);
+
+table.innerHTML = `
+<tr class="loading-row">
+<td colspan="4">
+جاري تحميل الطلاب...
+</td>
+</tr>
+`;
+
+const snapshot =
+await getDocs(
+collection(
+db,
+"students"
+)
+);
+
+const students = [];
+
+snapshot.forEach(item=>{
+
+students.push({
+id:item.id,
+...item.data()
+});
+
+});
+
+students.sort(
+(a,b)=>{
+
+const classCompare =
+(a.className || "")
+.localeCompare(
+b.className || "",
+"ar",
+{
+numeric:true,
+sensitivity:"base"
+}
+);
+
+if(classCompare !== 0){
+return classCompare;
+}
+
+return (
+a.name || ""
+)
+.localeCompare(
+b.name || "",
+"ar"
+);
+
+}
+);
+
+let currentClass = "";
+let html = "";
+
+students.forEach(student=>{
+
+if(
+(student.className || "")
+!==
+currentClass
+){
+
+currentClass =
+student.className ||
+"بدون فصل";
+
+html += `
+<tr class="class-divider">
+<td colspan="4">
+${currentClass}
+</td>
+</tr>
+`;
+
+}
+
+html += `
+<tr>
+
+<td
+class="student-name"
+style="
+padding:8px 12px;
+font-size:13px;
+"
+>
+${student.name || ""}
+</td>
+
+<td
+style="
+padding:8px;
+font-size:12px;
+"
+>
+${student.className || ""}
+</td>
+
+<td
+style="
+padding:8px;
+font-size:12px;
+direction:ltr;
+"
+>
+${student.guardianPhone || ""}
+</td>
+
+<td
+style="
+padding:6px;
+"
+>
+
+<button
+class="action-btn edit-btn"
+style="
+padding:5px 9px;
+font-size:12px;
+"
+onclick='openModal(
+"student",
+"${student.id}",
+${JSON.stringify(student)}
+)'
+>
+تعديل
+</button>
+
+<button
+class="action-btn delete-btn"
+style="
+padding:5px 9px;
+font-size:12px;
+"
+onclick="deleteStudent(
+'${student.id}',
+'${student.name || ""}'
+)"
+>
+حذف
+</button>
+
+</td>
+
+</tr>
+`;
+
+});
+
+table.innerHTML = html;
+
+document
+.getElementById(
+"studentsCount"
+)
+.innerText =
+students.length;
+
+}
+
+window.deleteStudent =
+async function(
+id,
+name
+){
+
+const ok =
+confirm(
+`هل أنت متأكد من حذف الطالب:\n${name} ؟`
+);
+
+if(!ok) return;
+
+await archiveItem(
+name,
+"طالب"
+);
+
+await deleteDoc(
+doc(
+db,
+"students",
+id
+)
+);
+
+await loadStudents();
+
+};
+
+/* Delete ALL students */
+
+window.deleteAllStudents =
+async function(){
+
+const first =
+confirm(
+"هل أنت متأكد من حذف جميع الطلاب؟"
+);
+
+if(!first) return;
+
+const second =
+confirm(
+"تنبيه: سيتم حذف جميع الطلاب نهائيًا. هل تريد المتابعة؟"
+);
+
+if(!second) return;
+
+try{
+
+const table =
+document
+.getElementById(
+"studentsTable"
+);
+
+table.innerHTML = `
+<tr class="loading-row">
+<td colspan="4">
+جاري حذف جميع الطلاب...
+</td>
+</tr>
+`;
+
+const snapshot =
+await getDocs(
+collection(
+db,
+"students"
+)
+);
+
+const batchSize = 25;
+
+const docs =
+snapshot.docs;
+
+for(
+let i = 0;
+i < docs.length;
+i += batchSize
+){
+
+const currentBatch =
+docs.slice(
+i,
+i + batchSize
+);
+
+await Promise.all(
+
+currentBatch.map(
+item=>
+deleteDoc(
+doc(
+db,
+"students",
+item.id
+)
+)
+)
+
+);
+
+}
+
+alert(
+"تم حذف جميع الطلاب بنجاح"
+);
+
+await loadStudents();
+
+}catch(error){
+
+console.error(error);
+
+alert(
+"حدث خطأ أثناء حذف جميع الطلاب"
+);
+
+await loadStudents();
+
+}
+
+};
+
+/* ================================
+   NEW BULK ASSIGNMENT SYSTEM
+================================ */
+
+async function refreshAssignmentPage(){
+
+/* Teachers */
+
+const teacherSnapshot =
+await getDocs(
+collection(
+db,
+"teachers"
+)
+);
+
+cachedTeachers = [];
+
+teacherSnapshot.forEach(item=>{
+
+cachedTeachers.push({
+id:item.id,
+...item.data()
+});
+
+});
+
+cachedTeachers.sort(
+(a,b)=>
+(a.name || "")
+.localeCompare(
+b.name || "",
+"ar"
+)
+);
+
+/* Classes */
+
+const classSnapshot =
+await getDocs(
+collection(
+db,
+"classes"
+)
+);
+
+cachedClasses = [];
+
+classSnapshot.forEach(item=>{
+
+cachedClasses.push({
+id:item.id,
+...item.data()
+});
+
+});
+
+cachedClasses.sort(
+(a,b)=>
+(a.name || "")
+.localeCompare(
+b.name || "",
+"ar",
+{
+numeric:true,
+sensitivity:"base"
+}
+)
+);
+
+/* Assignments */
+
+const assignmentSnapshot =
+await getDocs(
+collection(
+db,
+"assignments"
+)
+);
+
+cachedAssignments = [];
+
+assignmentSnapshot.forEach(item=>{
+
+cachedAssignments.push({
+id:item.id,
+...item.data()
+});
+
+});
+
+/* Teacher select */
+
+const currentTeacher =
+bulkTeacherSelect.value;
+
+bulkTeacherSelect.innerHTML = `
+<option value="">
+اختر المعلم
+</option>
+`;
+
+cachedTeachers.forEach(
+teacher=>{
+
+bulkTeacherSelect.innerHTML += `
+<option value="${teacher.name}">
+${teacher.name}
+</option>
+`;
+
+}
+);
+
+if(
+cachedTeachers.some(
+teacher=>
+teacher.name === currentTeacher
+)
+){
+
+bulkTeacherSelect.value =
+currentTeacher;
+
+}
+
+/* Render current assignments */
+
+renderAssignments();
+
+/* Render checkboxes */
+
+renderClassCheckboxes();
+
+}
+
+/* When teacher changes */
+
+bulkTeacherSelect.addEventListener(
+"change",
+renderClassCheckboxes
+);
+
+function renderClassCheckboxes(){
+
+const teacherName =
+bulkTeacherSelect.value;
+
+if(!teacherName){
+
+classesCheckboxArea.innerHTML = `
+<div class="empty-assignment">
+اختر المعلم أولًا لعرض جميع الفصول.
+</div>
+`;
+
+return;
+
+}
+
+if(
+cachedClasses.length === 0
+){
+
+classesCheckboxArea.innerHTML = `
+<div class="empty-assignment">
+لا توجد فصول مضافة.
+</div>
+`;
+
+return;
+
+}
+
+const teacherAssignments =
+cachedAssignments.filter(
+item=>
+item.teacherName === teacherName
+);
+
+const assignedNames =
+teacherAssignments.map(
+item=>item.className
+);
+
+let html = `
+<div
+style="
+color:#cbd5e1;
+font-weight:800;
+margin-bottom:10px;
+"
+>
+حدد الفصول التي تريد إسنادها للمعلم:
+<strong style="color:#facc15;">
+${teacherName}
+</strong>
+</div>
+
+<div class="classes-checkbox-grid">
+`;
+
+cachedClasses.forEach(
+classItem=>{
+
+const checked =
+assignedNames.includes(
+classItem.name
+)
+?
+"checked"
+:
+"";
+
+html += `
+<label class="class-check-card">
+
+<input
+type="checkbox"
+class="bulk-class-checkbox"
+value="${classItem.name}"
+${checked}
+/>
+
+<span>
+${classItem.name}
+</span>
+
+</label>
+`;
+
+}
+);
+
+html += `
+</div>
+`;
+
+classesCheckboxArea.innerHTML =
+html;
+
+}
+
+/* Select ALL */
+
+window.selectAllClasses =
+function(){
+
+document
+.querySelectorAll(
+".bulk-class-checkbox"
+)
+.forEach(
+checkbox=>{
+checkbox.checked = true;
+}
+);
+
+};
+
+/* Clear ALL checks */
+
+window.clearClassSelection =
+function(){
+
+document
+.querySelectorAll(
+".bulk-class-checkbox"
+)
+.forEach(
+checkbox=>{
+checkbox.checked = false;
+}
+);
+
+};
+
+/* Save bulk assignment */
+
+window.saveBulkAssignment =
+async function(){
+
+const teacherName =
+bulkTeacherSelect.value;
+
+if(!teacherName){
+
+alert(
+"اختر المعلم أولًا"
+);
+
+return;
+
+}
+
+const selectedClasses =
+Array.from(
+document.querySelectorAll(
+".bulk-class-checkbox:checked"
+)
+)
+.map(
+item=>item.value
+);
+
+if(
+selectedClasses.length === 0
+){
+
+const removeAll =
+confirm(
+"لم تحدد أي فصل. هل تريد حذف جميع إسنادات هذا المعلم؟"
+);
+
+if(!removeAll){
+return;
+}
+
+await deleteTeacherAssignments(
+teacherName,
+false
+);
+
+return;
+
+}
+
+try{
+
+/* Current assignments of selected teacher */
+
+const current =
+cachedAssignments.filter(
+item=>
+item.teacherName === teacherName
+);
+
+/* Delete unchecked existing classes */
+
+const toDelete =
+current.filter(
+item=>
+!selectedClasses.includes(
+item.className
+)
+);
+
+await Promise.all(
+toDelete.map(
+item=>
+deleteDoc(
+doc(
+db,
+"assignments",
+item.id
+)
+)
+)
+);
+
+/* Add missing classes */
+
+const existingClassNames =
+current.map(
+item=>item.className
+);
+
+const toAdd =
+selectedClasses.filter(
+className=>
+!existingClassNames.includes(
+className
+)
+);
+
+await Promise.all(
+toAdd.map(
+className=>
+addDoc(
+collection(
+db,
+"assignments"
+),
+{
+teacherName,
+className
+}
+)
+)
+);
+
+alert(
+`تم حفظ إسناد ${teacherName} بنجاح`
+);
+
+await refreshAssignmentPage();
+
+}catch(error){
+
+console.error(error);
+
+alert(
+"حدث خطأ أثناء حفظ الإسناد"
+);
+
+}
+
+};
+
+/* Current assignment cards */
+
+function renderAssignments(){
+
+const container =
+document
+.getElementById(
+"assignmentsContainer"
+);
+
+if(
+cachedTeachers.length === 0
+){
+
+container.innerHTML = `
+<div class="empty-assignment">
+لا يوجد معلمون مضافون.
+</div>
+`;
+
+return;
+
+}
+
+let html = "";
+
+cachedTeachers.forEach(
+teacher=>{
+
+const teacherAssignments =
+cachedAssignments
+.filter(
+item=>
+item.teacherName === teacher.name
+)
+.sort(
+(a,b)=>
+(a.className || "")
+.localeCompare(
+b.className || "",
+"ar",
+{
+numeric:true,
+sensitivity:"base"
+}
+)
+);
+
+let classesHtml = "";
+
+if(
+teacherAssignments.length === 0
+){
+
+classesHtml = `
+<div class="empty-assignment">
+لا توجد فصول مسندة لهذا المعلم.
+</div>
+`;
+
+}else{
+
+classesHtml =
+teacherAssignments
+.map(
+item=>`
+<span class="assigned-class-chip">
+${item.className}
+</span>
+`
+)
+.join("");
+
+}
+
+html += `
+<div class="assignment-teacher-block">
+
+<div class="assignment-teacher-head">
+
+<div class="assignment-teacher-name">
+${teacher.name}
+</div>
+
+<button
+class="action-btn delete-btn"
+onclick='deleteTeacherAssignments(
+${JSON.stringify(teacher.name)}
+)'
+>
+حذف إسناد المعلم
+</button>
+
+</div>
+
+<div class="assigned-classes">
+${classesHtml}
+</div>
+
+</div>
+`;
+
+}
+);
+
+container.innerHTML =
+html;
+
+}
+
+/* Delete one teacher assignment */
+
+window.deleteTeacherAssignments =
+async function(
+teacherName,
+askConfirm = true
+){
+
+if(askConfirm){
+
+const ok =
+confirm(
+`هل أنت متأكد من حذف جميع إسنادات المعلم:\n${teacherName} ؟`
+);
+
+if(!ok){
+return;
+}
+
+}
+
+try{
+
+const snapshot =
+await getDocs(
+collection(
+db,
+"assignments"
+)
+);
+
+const related =
+snapshot.docs
+.filter(
+item=>
+item.data().teacherName === teacherName
+);
+
+if(
+related.length === 0
+){
+
+if(askConfirm){
+
+alert(
+"لا توجد إسنادات لهذا المعلم"
+);
+
+}
+
+return;
+
+}
+
+await Promise.all(
+related.map(
+item=>
+deleteDoc(
+doc(
+db,
+"assignments",
+item.id
+)
+)
+)
+);
+
+if(askConfirm){
+
+alert(
+`تم حذف جميع إسنادات المعلم ${teacherName}`
+);
+
+}else{
+
+alert(
+"تم حذف جميع إسنادات المعلم"
+);
+
+}
+
+await refreshAssignmentPage();
+
+}catch(error){
+
+console.error(error);
+
+alert(
+"حدث خطأ أثناء حذف الإسناد"
+);
+
+}
+
+};
+
+/* Delete ALL assignments */
+
+window.deleteAllAssignments =
+async function(){
+
+const first =
+confirm(
+"هل أنت متأكد من حذف جميع الإسنادات؟"
+);
+
+if(!first){
+return;
+}
+
+const second =
+confirm(
+"سيتم حذف إسناد جميع المعلمين من جميع الفصول. هل تريد المتابعة؟"
+);
+
+if(!second){
+return;
+}
+
+try{
+
+const snapshot =
+await getDocs(
+collection(
+db,
+"assignments"
+)
+);
+
+if(
+snapshot.empty
+){
+
+alert(
+"لا توجد إسنادات للحذف"
+);
+
+return;
+
+}
+
+await Promise.all(
+snapshot.docs.map(
+item=>
+deleteDoc(
+doc(
+db,
+"assignments",
+item.id
+)
+)
+)
+);
+
+alert(
+"تم حذف جميع الإسنادات بنجاح"
+);
+
+await refreshAssignmentPage();
+
+}catch(error){
+
+console.error(error);
+
+alert(
+"حدث خطأ أثناء حذف الإسنادات"
+);
+
+}
+
+};
+
+/* ================================
+   Exams
+================================ */
+
+async function loadExams(){
+
+const table =
+document
+.getElementById(
+"examsTable"
+);
+
+table.innerHTML = "";
+
+const snapshot =
+await getDocs(
+collection(
+db,
+"exams"
+)
+);
+
+let exams = [];
+
+snapshot.forEach(
+item=>{
+
+exams.push({
+id:item.id,
+...item.data()
+});
+
+}
+);
+
+exams.sort(
+(a,b)=>
+Number(
+a.order || 999
+)
+-
+Number(
+b.order || 999
+)
+);
+
+let html = "";
+
+exams.forEach(
+exam=>{
+
+html += `
+<tr>
+
+<td>
+${exam.order || "-"}
+</td>
+
+<td>
+${exam.examName || ""}
+</td>
+
+<td>
+${exam.maxDegree || ""}
+</td>
+
+<td>
+
+<button
+class="action-btn edit-btn"
+onclick='openModal(
+"exam",
+"${exam.id}",
+${JSON.stringify(exam)}
+)'
+>
+تعديل
+</button>
+
+<button
+class="action-btn delete-btn"
+onclick="deleteExam(
+'${exam.id}',
+'${exam.examName || ""}'
+)"
+>
+حذف
+</button>
+
+</td>
+
+</tr>
+`;
+
+}
+);
+
+table.innerHTML =
+html;
+
+}
+
+window.deleteExam =
+async function(
+id,
+name
+){
+
+const ok =
+confirm(
+`هل أنت متأكد من حذف الاختبار:\n${name} ؟`
+);
+
+if(!ok) return;
+
+await archiveItem(
+name,
+"اختبار"
+);
+
+await deleteDoc(
+doc(
+db,
+"exams",
+id
+)
+);
+
+await loadExams();
+
+};
+
+/* ================================
+   Archive
+================================ */
+
+async function loadArchive(){
+
+const table =
+document
+.getElementById(
+"archiveTable"
+);
+
+table.innerHTML = "";
+
+const snapshot =
+await getDocs(
+collection(
+db,
+"adminArchive"
+)
+);
+
+let html = "";
+
+snapshot.forEach(
+item=>{
+
+const data =
+item.data();
+
+html += `
+<tr>
+
+<td>
+${data.name || ""}
+</td>
+
+<td>
+${data.type || ""}
+</td>
+
+<td>
+${data.archivedAt || ""}
+</td>
+
+</tr>
+`;
+
+}
+);
+
+table.innerHTML =
+html;
+
+}
+
+/* ================================
+   Class Options
+================================ */
+
+async function loadClassOptions(){
+
+const select =
+document
+.getElementById(
+"classSelect"
+);
+
+select.innerHTML = "";
+
+const snapshot =
+await getDocs(
+collection(
+db,
+"classes"
+)
+);
+
+const classes = [];
+
+snapshot.forEach(
+item=>{
+classes.push(
+item.data()
+);
+}
+);
+
+classes.sort(
+(a,b)=>
+(a.name || "")
+.localeCompare(
+b.name || "",
+"ar",
+{
+numeric:true,
+sensitivity:"base"
+}
+)
+);
+
+classes.forEach(
+item=>{
+
+select.innerHTML += `
+<option value="${item.name}">
+${item.name}
+</option>
+`;
+
+}
+);
+
+}
+
+/* ================================
+   Excel Import
+================================ */
+
+document
+.getElementById(
+"excelFile"
+)
+.addEventListener(
+"change",
+event=>{
+
+const file =
+event.target.files[0];
+
+if(!file){
+return;
+}
+
+const reader =
+new FileReader();
+
+reader.onload =
+async(e)=>{
+
+try{
+
+const data =
+new Uint8Array(
+e.target.result
+);
+
+const workbook =
+XLSX.read(
+data,
+{
+type:"array"
+}
+);
+
+const sheet =
+workbook.Sheets[
+workbook.SheetNames[0]
+];
+
+const rows =
+XLSX.utils.sheet_to_json(
+sheet,
+{
+header:1,
+raw:false
+}
+);
+
+const studentsToAdd =
+[];
+
+for(
+let i = 1;
+i < rows.length;
+i++
+){
+
+if(
+!rows[i][0]
+){
+continue;
+}
+
+studentsToAdd.push({
+name:
+String(
+rows[i][0] || ""
+).trim(),
+
+className:
+String(
+rows[i][1] || ""
+).trim(),
+
+guardianPhone:
+String(
+rows[i][2] || ""
+).trim()
+});
+
+}
+
+if(
+studentsToAdd.length === 0
+){
+
+alert(
+"لم يتم العثور على بيانات طلاب في الملف"
+);
+
+return;
+
+}
+
+const batchSize =
+25;
+
+for(
+let i = 0;
+i < studentsToAdd.length;
+i += batchSize
+){
+
+const currentBatch =
+studentsToAdd.slice(
+i,
+i + batchSize
+);
+
+await Promise.all(
+
+currentBatch.map(
+student=>
+addDoc(
+collection(
+db,
+"students"
+),
+student
+)
+)
+
+);
+
+}
+
+alert(
+`تم استيراد ${studentsToAdd.length} طالب مع أرقام أولياء الأمور`
+);
+
+await loadStudents();
+
+event.target.value = "";
+
+}catch(error){
+
+console.error(error);
+
+alert(
+"حدث خطأ أثناء استيراد ملف Excel"
+);
+
+}
+
+};
+
+reader.readAsArrayBuffer(
+file
+);
+
+}
+);
+
+/* ================================
+   Logout
+================================ */
+
+window.logout =
+function(){
+
+localStorage.clear();
+
+window.location.href =
+"index.html";
+
+};
+
+/* ================================
+   Initial Load
+================================ */
+
+await loadTeachers();
+
+await loadSupervisors();
+
+await loadClasses();
+
+await loadStudents();
+
+await loadExams();
+
 await loadArchive();
+
+await refreshAssignmentPage();
 
 </script>
 
 </body>
 </html>
-```
