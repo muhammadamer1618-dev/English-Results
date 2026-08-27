@@ -34,6 +34,7 @@
   </div>
 
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px;margin-bottom:25px;">
+
     <div class="input-group">
       <select id="classSelect">
         <option>اختر الفصل</option>
@@ -49,6 +50,7 @@
         <option>اختر اختبار للتفريغ</option>
       </select>
     </div>
+
   </div>
 
   <div style="overflow:auto;">
@@ -59,15 +61,30 @@
   </div>
 
   <div style="margin-top:20px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap;">
-    <button class="primary-btn" onclick="saveAllGrades()">حفظ جميع الدرجات</button>
 
-    <button class="primary-btn" style="background:#dc2626;color:white;" onclick="clearSelectedExam()">
+    <button
+      class="primary-btn"
+      onclick="saveAllGrades()"
+    >
+      حفظ جميع الدرجات
+    </button>
+
+    <button
+      class="primary-btn"
+      style="background:#dc2626;color:white;"
+      onclick="clearSelectedExam()"
+    >
       تفريغ الاختبار المحدد
     </button>
 
-    <button class="primary-btn" style="background:#7f1d1d;color:white;" onclick="clearAllExams()">
+    <button
+      class="primary-btn"
+      style="background:#7f1d1d;color:white;"
+      onclick="clearAllExams()"
+    >
       تفريغ جميع الاختبارات
     </button>
+
   </div>
 
 </div>
@@ -91,136 +108,426 @@ import {
   doc
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
-if (localStorage.getItem("rasedRole") !== "teacher") {
+
+/* =========================================
+   حماية الصفحة
+========================================= */
+
+if (
+  localStorage.getItem("rasedRole") !== "teacher"
+) {
   window.location.href = "index.html";
 }
 
-const teacherName = localStorage.getItem("teacherName");
+
+/* =========================================
+   بيانات المعلم
+========================================= */
+
+const teacherName =
+  localStorage.getItem("teacherName");
 
 document.getElementById("teacherName").innerText =
   teacherName || "Teacher";
 
-const classSelect = document.getElementById("classSelect");
-const clearExamSelect = document.getElementById("clearExamSelect");
-const tableHead = document.getElementById("tableHead");
-const tableBody = document.getElementById("tableBody");
 
+/* =========================================
+   العناصر
+========================================= */
+
+const classSelect =
+  document.getElementById("classSelect");
+
+const clearExamSelect =
+  document.getElementById("clearExamSelect");
+
+const tableHead =
+  document.getElementById("tableHead");
+
+const tableBody =
+  document.getElementById("tableBody");
+
+
+/* =========================================
+   المتغيرات
+========================================= */
+
+/*
+allExams
+كل الاختبارات الموجودة في النظام.
+
+exams
+الاختبارات المسموح بها للفصل المختار فقط.
+*/
+
+let allExams = [];
 let exams = [];
 let allGrades = [];
 let currentStudents = [];
 
-window.showSection = function(id) {
-  document.querySelectorAll(".section").forEach(section => {
-    section.classList.remove("active-section");
-  });
 
-  document.getElementById(id).classList.add("active-section");
+/* =========================================
+   الأقسام
+========================================= */
+
+window.showSection = function(id) {
+
+  document
+    .querySelectorAll(".section")
+    .forEach(section => {
+
+      section.classList.remove(
+        "active-section"
+      );
+
+    });
+
+  document
+    .getElementById(id)
+    .classList.add(
+      "active-section"
+    );
+
 };
 
-async function loadTeacherClasses() {
-  classSelect.innerHTML = "<option>اختر الفصل</option>";
 
-  const snapshot = await getDocs(
-    query(
-      collection(db, "assignments"),
-      where("teacherName", "==", teacherName)
-    )
-  );
+/* =========================================
+   تحميل فصول المعلم
+========================================= */
+
+async function loadTeacherClasses() {
+
+  classSelect.innerHTML =
+    "<option>اختر الفصل</option>";
+
+  const snapshot =
+    await getDocs(
+      query(
+        collection(db, "assignments"),
+        where(
+          "teacherName",
+          "==",
+          teacherName
+        )
+      )
+    );
 
   const classes = [];
 
   snapshot.forEach(item => {
-    classes.push(item.data().className);
+
+    const className =
+      item.data().className;
+
+    if (
+      className &&
+      !classes.includes(className)
+    ) {
+      classes.push(className);
+    }
+
   });
 
-  classes.sort((a, b) => a.localeCompare(b, "ar"));
+  classes.sort(
+    (a, b) =>
+      a.localeCompare(
+        b,
+        "ar",
+        {
+          numeric: true,
+          sensitivity: "base"
+        }
+      )
+  );
 
   classes.forEach(className => {
-    classSelect.innerHTML += `<option>${className}</option>`;
+
+    classSelect.innerHTML += `
+      <option value="${className}">
+        ${className}
+      </option>
+    `;
+
   });
+
 }
 
-async function loadExams() {
-  exams = [];
 
-  const snapshot = await getDocs(collection(db, "exams"));
+/* =========================================
+   تحميل جميع الاختبارات من الأدمن
+========================================= */
+
+async function loadAllExams() {
+
+  allExams = [];
+
+  const snapshot =
+    await getDocs(
+      collection(
+        db,
+        "exams"
+      )
+    );
 
   snapshot.forEach(item => {
-    const data = item.data();
 
-    exams.push({
-      examName: data.examName,
-      maxDegree: Number(data.maxDegree || 0),
-      order: Number(data.order || 999)
+    const data =
+      item.data();
+
+    allExams.push({
+
+      id: item.id,
+
+      examName:
+        data.examName,
+
+      maxDegree:
+        Number(
+          data.maxDegree || 0
+        ),
+
+      order:
+        Number(
+          data.order || 999
+        ),
+
+      /*
+      الاختبار القديم الذي ليس لديه examScope
+      يُعتبر عامًا.
+      */
+
+      examScope:
+        data.examScope || "all",
+
+      assignedClasses:
+        Array.isArray(
+          data.assignedClasses
+        )
+        ?
+        data.assignedClasses
+        :
+        []
+
     });
+
   });
 
-  exams.sort((a, b) => a.order - b.order);
+  allExams.sort(
+    (a, b) =>
+      a.order - b.order
+  );
 
-  clearExamSelect.innerHTML = "<option>اختر اختبار للتفريغ</option>";
+}
+
+
+/* =========================================
+   تحديد الاختبارات الخاصة بالفصل
+========================================= */
+
+function filterExamsForClass(
+  className
+) {
+
+  exams =
+    allExams.filter(exam => {
+
+      /*
+      الاختبار العام
+      يظهر لكل الفصول.
+      */
+
+      if (
+        !exam.examScope ||
+        exam.examScope === "all"
+      ) {
+        return true;
+      }
+
+      /*
+      الاختبار المحدد لفصول معينة.
+      */
+
+      if (
+        exam.examScope === "selected"
+      ) {
+
+        return (
+          Array.isArray(
+            exam.assignedClasses
+          )
+          &&
+          exam.assignedClasses.includes(
+            className
+          )
+        );
+
+      }
+
+      /*
+      حماية إضافية:
+      أي اختبار قديم أو قيمة غير معروفة
+      يعتبر عامًا.
+      */
+
+      return true;
+
+    });
+
+}
+
+
+/* =========================================
+   قائمة تفريغ الاختبارات
+========================================= */
+
+function updateClearExamSelect() {
+
+  clearExamSelect.innerHTML =
+    "<option>اختر اختبار للتفريغ</option>";
 
   exams.forEach(exam => {
+
     clearExamSelect.innerHTML += `
       <option value="${exam.examName}">
         ${exam.examName}
       </option>
     `;
+
   });
+
 }
 
+
+/* =========================================
+   تحميل درجات المعلم
+========================================= */
+
 async function loadAllGrades() {
+
   allGrades = [];
 
-  const snapshot = await getDocs(
-    query(
-      collection(db, "grades"),
-      where("teacherName", "==", teacherName)
-    )
-  );
+  const snapshot =
+    await getDocs(
+      query(
+        collection(
+          db,
+          "grades"
+        ),
+        where(
+          "teacherName",
+          "==",
+          teacherName
+        )
+      )
+    );
 
   snapshot.forEach(item => {
+
     allGrades.push({
       id: item.id,
       ...item.data()
     });
+
   });
+
 }
 
-classSelect.addEventListener("change", loadStudentsTable);
+
+/* =========================================
+   تغيير الفصل
+========================================= */
+
+classSelect.addEventListener(
+  "change",
+  loadStudentsTable
+);
+
+
+/* =========================================
+   عرض الطلاب واختبارات الفصل
+========================================= */
 
 async function loadStudentsTable() {
+
   tableHead.innerHTML = "";
   tableBody.innerHTML = "";
 
-  const className = classSelect.value;
+  const className =
+    classSelect.value;
 
-  if (className === "اختر الفصل") {
+  if (
+    className === "اختر الفصل"
+  ) {
+
+    exams = [];
+
+    updateClearExamSelect();
+
     return;
+
   }
+
+
+  /*
+  أولًا نحدد الاختبارات المسموح بها
+  لهذا الفصل فقط.
+  */
+
+  filterExamsForClass(
+    className
+  );
+
+  updateClearExamSelect();
+
 
   tableBody.innerHTML = `
     <tr class="loading-row">
-      <td colspan="50">جاري تحميل الطلاب...</td>
+      <td colspan="50">
+        جاري تحميل الطلاب...
+      </td>
     </tr>
   `;
 
+
   await loadAllGrades();
 
-  if (exams.length === 0) {
+
+  /*
+  لا توجد اختبارات عامة أو مسندة لهذا الفصل.
+  */
+
+  if (
+    exams.length === 0
+  ) {
+
+    tableHead.innerHTML = "";
+
     tableBody.innerHTML = `
       <tr>
-        <td colspan="50">لا توجد اختبارات مضافة من الأدمن</td>
+        <td colspan="50">
+          لا توجد اختبارات مسندة لهذا الفصل
+        </td>
       </tr>
     `;
+
     return;
+
   }
+
+
+  /* =========================================
+     رأس الجدول
+  ========================================= */
 
   let head = `
     <tr>
-      <th>اسم الطالب</th>
+      <th>
+        اسم الطالب
+      </th>
   `;
 
   exams.forEach(exam => {
+
     head += `
       <th>
         ${exam.examName}
@@ -228,62 +535,131 @@ async function loadStudentsTable() {
         من ${exam.maxDegree}
       </th>
     `;
+
   });
 
   head += `
-      <th>واتساب</th>
+      <th>
+        واتساب
+      </th>
     </tr>
   `;
 
-  tableHead.innerHTML = head;
+  tableHead.innerHTML =
+    head;
 
-  const studentsSnapshot = await getDocs(
-    query(
-      collection(db, "students"),
-      where("className", "==", className)
-    )
-  );
+
+  /* =========================================
+     تحميل الطلاب
+  ========================================= */
+
+  const studentsSnapshot =
+    await getDocs(
+      query(
+        collection(
+          db,
+          "students"
+        ),
+        where(
+          "className",
+          "==",
+          className
+        )
+      )
+    );
 
   currentStudents = [];
 
-  studentsSnapshot.forEach(studentDoc => {
-    currentStudents.push(studentDoc.data());
-  });
+  studentsSnapshot.forEach(
+    studentDoc => {
 
-  currentStudents.sort((a, b) =>
-    a.name.localeCompare(b.name, "ar")
+      currentStudents.push(
+        studentDoc.data()
+      );
+
+    }
   );
+
+  currentStudents.sort(
+    (a, b) =>
+      (a.name || "")
+      .localeCompare(
+        b.name || "",
+        "ar"
+      )
+  );
+
+
+  /* =========================================
+     إنشاء الصفوف
+  ========================================= */
 
   let html = "";
 
-  for (const student of currentStudents) {
+  for (
+    const student of currentStudents
+  ) {
+
     html += `
       <tr>
+
         <td class="student-name">
           ${student.name}
         </td>
     `;
 
-    for (const exam of exams) {
-      const existingGrade = allGrades.find(item =>
-        item.studentName === student.name &&
-        item.className === className &&
-        item.examName === exam.examName
-      );
 
-      const currentGrade = existingGrade ? existingGrade.grade : "";
+    for (
+      const exam of exams
+    ) {
+
+      const existingGrade =
+        allGrades.find(item =>
+
+          item.studentName ===
+            student.name
+
+          &&
+
+          item.className ===
+            className
+
+          &&
+
+          item.examName ===
+            exam.examName
+
+          &&
+
+          item.teacherName ===
+            teacherName
+
+        );
+
+
+      const currentGrade =
+        existingGrade
+        ?
+        existingGrade.grade
+        :
+        "";
+
 
       html += `
         <td>
+
           <input
             type="number"
             value="${currentGrade}"
             min="0"
             max="${exam.maxDegree}"
+
             data-student="${student.name}"
             data-exam="${exam.examName}"
             data-max="${exam.maxDegree}"
+
             class="grade-input"
+
             style="
               width:85px;
               padding:8px;
@@ -294,83 +670,201 @@ async function loadStudentsTable() {
               text-align:center;
             "
           />
+
         </td>
       `;
+
     }
+
 
     html += `
         <td>
+
           <button
             class="primary-btn"
-            style="background:#16a34a;color:white;padding:8px 12px;font-size:12px;"
+
+            style="
+              background:#16a34a;
+              color:white;
+              padding:8px 12px;
+              font-size:12px;
+            "
+
             onclick="sendWhatsApp('${encodeURIComponent(student.name)}')"
           >
             إرسال
           </button>
+
         </td>
+
       </tr>
     `;
+
   }
 
-  tableBody.innerHTML = html;
+
+  tableBody.innerHTML =
+    html;
+
 }
 
+
+/* =========================================
+   تنظيف رقم الجوال
+========================================= */
+
 function cleanPhone(phone) {
-  let value = String(phone || "").trim();
 
-  value = value.replace(/[^\d]/g, "");
+  let value =
+    String(
+      phone || ""
+    ).trim();
 
-  if (value.startsWith("00")) {
-    value = value.slice(2);
+  value =
+    value.replace(
+      /[^\d]/g,
+      ""
+    );
+
+  if (
+    value.startsWith("00")
+  ) {
+
+    value =
+      value.slice(2);
+
   }
 
-  if (value.startsWith("0")) {
-    value = "966" + value.slice(1);
+  if (
+    value.startsWith("0")
+  ) {
+
+    value =
+      "966" +
+      value.slice(1);
+
   }
 
-  if (!value.startsWith("966")) {
-    value = "966" + value;
+  if (
+    !value.startsWith("966")
+  ) {
+
+    value =
+      "966" + value;
+
   }
 
   return value;
+
 }
 
-window.sendWhatsApp = function(encodedStudentName) {
-  const studentName = decodeURIComponent(encodedStudentName);
-  const className = classSelect.value;
 
-  const student = currentStudents.find(item =>
-    item.name === studentName
-  );
+/* =========================================
+   إرسال النتائج عبر واتساب
+========================================= */
 
-  if (!student || !student.guardianPhone) {
-    alert("رقم ولي الأمر غير موجود لهذا الطالب");
+window.sendWhatsApp =
+function(
+  encodedStudentName
+) {
+
+  const studentName =
+    decodeURIComponent(
+      encodedStudentName
+    );
+
+  const className =
+    classSelect.value;
+
+
+  const student =
+    currentStudents.find(
+      item =>
+        item.name ===
+        studentName
+    );
+
+
+  if (
+    !student ||
+    !student.guardianPhone
+  ) {
+
+    alert(
+      "رقم ولي الأمر غير موجود لهذا الطالب"
+    );
+
     return;
+
   }
+
 
   const studentGrades = [];
 
-  exams.forEach(exam => {
-    const gradeData = allGrades.find(item =>
-      item.studentName === studentName &&
-      item.className === className &&
-      item.examName === exam.examName &&
-      item.teacherName === teacherName
-    );
 
-    if (gradeData && gradeData.grade !== "") {
-      studentGrades.push(
-        `${exam.examName}: ${gradeData.grade} / ${exam.maxDegree}`
+  /*
+  مهم:
+  نستخدم exams فقط.
+  وبالتالي لن ترسل الرسالة
+  إلا الاختبارات الخاصة بهذا الفصل.
+  */
+
+  exams.forEach(exam => {
+
+    const gradeData =
+      allGrades.find(item =>
+
+        item.studentName ===
+          studentName
+
+        &&
+
+        item.className ===
+          className
+
+        &&
+
+        item.examName ===
+          exam.examName
+
+        &&
+
+        item.teacherName ===
+          teacherName
+
       );
+
+
+    if (
+      gradeData &&
+      gradeData.grade !== ""
+    ) {
+
+      studentGrades.push(
+
+        `${exam.examName}: ${gradeData.grade} / ${exam.maxDegree}`
+
+      );
+
     }
+
   });
 
-  if (studentGrades.length === 0) {
-    alert("لا توجد درجات مرصودة لهذا الطالب");
+
+  if (
+    studentGrades.length === 0
+  ) {
+
+    alert(
+      "لا توجد درجات مرصودة لهذا الطالب"
+    );
+
     return;
+
   }
 
-const message =
+
+  const message =
 `السلام عليكم ورحمة الله وبركاته
 
 ولي أمر الطالب: ${studentName}
@@ -384,156 +878,439 @@ ${studentGrades.join("\n")}
 
 مع تمنياتنا له بالتوفيق والنجاح.`;
 
-  const phone = cleanPhone(student.guardianPhone);
+
+  const phone =
+    cleanPhone(
+      student.guardianPhone
+    );
+
 
   const url =
     `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 
-  window.open(url, "_blank");
+
+  window.open(
+    url,
+    "_blank"
+  );
+
 };
 
-window.saveAllGrades = async function() {
-  const className = classSelect.value;
 
-  if (className === "اختر الفصل") {
-    alert("اختر الفصل أولًا");
-    return;
-  }
+/* =========================================
+   حفظ جميع الدرجات
+========================================= */
 
-  const inputs = document.querySelectorAll(".grade-input");
+window.saveAllGrades =
+async function() {
 
-  for (const input of inputs) {
-    const studentName = input.dataset.student;
-    const examName = input.dataset.exam;
-    const maxDegree = Number(input.dataset.max);
-    const value = input.value.trim();
+  const className =
+    classSelect.value;
 
-    if (value === "") {
-      continue;
-    }
 
-    const grade = Number(value);
+  if (
+    className === "اختر الفصل"
+  ) {
 
-    if (grade > maxDegree) {
-      alert(`${studentName} درجته أكبر من الدرجة النهائية في ${examName}`);
-      return;
-    }
-
-    const existing = allGrades.find(item =>
-      item.studentName === studentName &&
-      item.className === className &&
-      item.examName === examName
+    alert(
+      "اختر الفصل أولًا"
     );
 
-    if (existing) {
+    return;
+
+  }
+
+
+  const inputs =
+    document.querySelectorAll(
+      ".grade-input"
+    );
+
+
+  for (
+    const input of inputs
+  ) {
+
+    const studentName =
+      input.dataset.student;
+
+    const examName =
+      input.dataset.exam;
+
+    const maxDegree =
+      Number(
+        input.dataset.max
+      );
+
+    const value =
+      input.value.trim();
+
+
+    if (
+      value === ""
+    ) {
+
+      continue;
+
+    }
+
+
+    const grade =
+      Number(value);
+
+
+    if (
+      grade < 0
+    ) {
+
+      alert(
+        `${studentName} لديه درجة سالبة في ${examName}`
+      );
+
+      return;
+
+    }
+
+
+    if (
+      grade > maxDegree
+    ) {
+
+      alert(
+        `${studentName} درجته أكبر من الدرجة النهائية في ${examName}`
+      );
+
+      return;
+
+    }
+
+
+    const existing =
+      allGrades.find(item =>
+
+        item.studentName ===
+          studentName
+
+        &&
+
+        item.className ===
+          className
+
+        &&
+
+        item.examName ===
+          examName
+
+        &&
+
+        item.teacherName ===
+          teacherName
+
+      );
+
+
+    if (
+      existing
+    ) {
+
       await updateDoc(
-        doc(db, "grades", existing.id),
+        doc(
+          db,
+          "grades",
+          existing.id
+        ),
         {
           grade,
           maxDegree
         }
       );
+
     } else {
+
       await addDoc(
-        collection(db, "grades"),
+        collection(
+          db,
+          "grades"
+        ),
         {
           teacherName,
           studentName,
           className,
-          subject: "لغة إنجليزية",
+          subject:
+            "لغة إنجليزية",
           examName,
           grade,
           maxDegree
         }
       );
+
     }
+
   }
 
-  alert("تم حفظ جميع الدرجات");
+
+  alert(
+    "تم حفظ جميع الدرجات"
+  );
+
+
   await loadStudentsTable();
+
 };
 
-window.clearSelectedExam = async function() {
-  const className = classSelect.value;
-  const examName = clearExamSelect.value;
 
-  if (className === "اختر الفصل") {
-    alert("اختر الفصل أولًا");
-    return;
-  }
+/* =========================================
+   تفريغ اختبار محدد
+========================================= */
 
-  if (examName === "اختر اختبار للتفريغ") {
-    alert("اختر الاختبار المطلوب تفريغه");
-    return;
-  }
+window.clearSelectedExam =
+async function() {
 
-  const confirmClear = confirm(
-    `هل تريد تفريغ درجات "${examName}" لهذا الفصل؟`
-  );
+  const className =
+    classSelect.value;
 
-  if (!confirmClear) {
-    return;
-  }
+  const examName =
+    clearExamSelect.value;
 
-  const snapshot = await getDocs(
-    query(
-      collection(db, "grades"),
-      where("teacherName", "==", teacherName),
-      where("className", "==", className),
-      where("examName", "==", examName)
-    )
-  );
 
-  for (const item of snapshot.docs) {
-    await deleteDoc(
-      doc(db, "grades", item.id)
+  if (
+    className === "اختر الفصل"
+  ) {
+
+    alert(
+      "اختر الفصل أولًا"
     );
-  }
 
-  alert("تم تفريغ درجات الاختبار المحدد");
-  await loadStudentsTable();
-};
-
-window.clearAllExams = async function() {
-  const className = classSelect.value;
-
-  if (className === "اختر الفصل") {
-    alert("اختر الفصل أولًا");
     return;
+
   }
 
-  const confirmClear = confirm(
-    "هل تريد تفريغ جميع درجات هذا الفصل؟"
-  );
 
-  if (!confirmClear) {
-    return;
-  }
+  if (
+    examName ===
+    "اختر اختبار للتفريغ"
+  ) {
 
-  const snapshot = await getDocs(
-    query(
-      collection(db, "grades"),
-      where("teacherName", "==", teacherName),
-      where("className", "==", className)
-    )
-  );
-
-  for (const item of snapshot.docs) {
-    await deleteDoc(
-      doc(db, "grades", item.id)
+    alert(
+      "اختر الاختبار المطلوب تفريغه"
     );
+
+    return;
+
   }
 
-  alert("تم تفريغ جميع درجات الفصل");
+
+  /*
+  حماية إضافية:
+  نتأكد أن الاختبار ظاهر أصلًا لهذا الفصل.
+  */
+
+  const allowedExam =
+    exams.find(
+      exam =>
+        exam.examName ===
+        examName
+    );
+
+
+  if (
+    !allowedExam
+  ) {
+
+    alert(
+      "هذا الاختبار غير مسند لهذا الفصل"
+    );
+
+    return;
+
+  }
+
+
+  const confirmClear =
+    confirm(
+      `هل تريد تفريغ درجات "${examName}" لهذا الفصل؟`
+    );
+
+
+  if (
+    !confirmClear
+  ) {
+
+    return;
+
+  }
+
+
+  const snapshot =
+    await getDocs(
+      query(
+        collection(
+          db,
+          "grades"
+        ),
+
+        where(
+          "teacherName",
+          "==",
+          teacherName
+        ),
+
+        where(
+          "className",
+          "==",
+          className
+        ),
+
+        where(
+          "examName",
+          "==",
+          examName
+        )
+
+      )
+    );
+
+
+  for (
+    const item of snapshot.docs
+  ) {
+
+    await deleteDoc(
+      doc(
+        db,
+        "grades",
+        item.id
+      )
+    );
+
+  }
+
+
+  alert(
+    "تم تفريغ درجات الاختبار المحدد"
+  );
+
+
   await loadStudentsTable();
+
 };
 
-window.logout = function() {
+
+/* =========================================
+   تفريغ جميع اختبارات الفصل
+========================================= */
+
+window.clearAllExams =
+async function() {
+
+  const className =
+    classSelect.value;
+
+
+  if (
+    className ===
+    "اختر الفصل"
+  ) {
+
+    alert(
+      "اختر الفصل أولًا"
+    );
+
+    return;
+
+  }
+
+
+  const confirmClear =
+    confirm(
+      "هل تريد تفريغ جميع درجات هذا الفصل؟"
+    );
+
+
+  if (
+    !confirmClear
+  ) {
+
+    return;
+
+  }
+
+
+  const snapshot =
+    await getDocs(
+      query(
+        collection(
+          db,
+          "grades"
+        ),
+
+        where(
+          "teacherName",
+          "==",
+          teacherName
+        ),
+
+        where(
+          "className",
+          "==",
+          className
+        )
+
+      )
+    );
+
+
+  for (
+    const item of snapshot.docs
+  ) {
+
+    await deleteDoc(
+      doc(
+        db,
+        "grades",
+        item.id
+      )
+    );
+
+  }
+
+
+  alert(
+    "تم تفريغ جميع درجات الفصل"
+  );
+
+
+  await loadStudentsTable();
+
+};
+
+
+/* =========================================
+   تسجيل الخروج
+========================================= */
+
+window.logout =
+function() {
+
   localStorage.clear();
-  window.location.href = "index.html";
+
+  window.location.href =
+    "index.html";
+
 };
 
-await loadExams();
+
+/* =========================================
+   التشغيل الأولي
+========================================= */
+
+/*
+نحمل جميع الاختبارات مرة واحدة،
+لكن لا نعرضها حتى يختار المعلم الفصل.
+*/
+
+await loadAllExams();
+
 await loadTeacherClasses();
 
 </script>
