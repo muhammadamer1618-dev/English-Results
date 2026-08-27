@@ -76,210 +76,543 @@ import {
   addDoc
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
+
+/* =========================================
+   حماية الصفحة
+========================================= */
+
 if (localStorage.getItem("rasedRole") !== "supervisor") {
   window.location.href = "index.html";
 }
 
+
+/* =========================================
+   بيانات المشرف
+========================================= */
+
 document.getElementById("supervisorName").innerText =
   localStorage.getItem("supervisorName") || "Supervisor";
 
-const teacherSelect = document.getElementById("teacherSelect");
-const classSelect = document.getElementById("classSelect");
-const tableHead = document.getElementById("tableHead");
-const tableBody = document.getElementById("tableBody");
 
+/* =========================================
+   العناصر
+========================================= */
+
+const teacherSelect =
+  document.getElementById("teacherSelect");
+
+const classSelect =
+  document.getElementById("classSelect");
+
+const tableHead =
+  document.getElementById("tableHead");
+
+const tableBody =
+  document.getElementById("tableBody");
+
+
+/* =========================================
+   المتغيرات
+========================================= */
+
+/*
+allExams = جميع الاختبارات الموجودة في النظام.
+
+exams = الاختبارات المسموح بها للفصل
+المختار فقط.
+*/
+
+let allExams = [];
 let exams = [];
 let allGrades = [];
 let currentStudents = [];
 
+
+/* =========================================
+   الأقسام
+========================================= */
+
 window.showSection = function(id) {
+
   document.querySelectorAll(".section").forEach(section => {
     section.classList.remove("active-section");
   });
 
   document.getElementById(id).classList.add("active-section");
+
 };
 
-async function loadTeachers() {
-  teacherSelect.innerHTML = "<option>اختر المعلم</option>";
 
-  const snapshot = await getDocs(collection(db, "teachers"));
+/* =========================================
+   تحميل المعلمين
+========================================= */
+
+async function loadTeachers() {
+
+  teacherSelect.innerHTML =
+    "<option>اختر المعلم</option>";
+
+  const snapshot =
+    await getDocs(
+      collection(db, "teachers")
+    );
 
   const teachers = [];
 
   snapshot.forEach(item => {
-    teachers.push(item.data().name);
+
+    const name =
+      item.data().name;
+
+    if (
+      name &&
+      !teachers.includes(name)
+    ) {
+      teachers.push(name);
+    }
+
   });
 
   teachers.sort((a, b) =>
-    a.localeCompare(b, "ar")
+    a.localeCompare(
+      b,
+      "ar"
+    )
   );
 
   teachers.forEach(name => {
+
     teacherSelect.innerHTML += `
       <option>${name}</option>
     `;
+
   });
+
 }
+
+
+/* =========================================
+   تحميل جميع الاختبارات
+========================================= */
 
 async function loadExams() {
-  exams = [];
 
-  const snapshot = await getDocs(collection(db, "exams"));
+  allExams = [];
+
+  const snapshot =
+    await getDocs(
+      collection(db, "exams")
+    );
 
   snapshot.forEach(item => {
-    const data = item.data();
 
-    exams.push({
-      examName: data.examName,
-      maxDegree: Number(data.maxDegree || 0),
-      order: Number(data.order || 999)
+    const data =
+      item.data();
+
+    allExams.push({
+
+      id: item.id,
+
+      examName:
+        data.examName,
+
+      maxDegree:
+        Number(
+          data.maxDegree || 0
+        ),
+
+      order:
+        Number(
+          data.order || 999
+        ),
+
+      /*
+      الاختبارات القديمة التي لا تحتوي
+      examScope تعتبر عامة تلقائيًا.
+      */
+
+      examScope:
+        data.examScope || "all",
+
+      assignedClasses:
+        Array.isArray(
+          data.assignedClasses
+        )
+        ? data.assignedClasses
+        : []
+
     });
+
   });
 
-  exams.sort((a, b) => a.order - b.order);
+  allExams.sort(
+    (a, b) =>
+      a.order - b.order
+  );
+
 }
 
+
+/* =========================================
+   فلترة الاختبارات حسب الفصل
+========================================= */
+
+function filterExamsForClass(className) {
+
+  exams =
+    allExams.filter(exam => {
+
+      /*
+      الاختبار العام
+      يظهر لجميع الفصول.
+      */
+
+      if (
+        !exam.examScope ||
+        exam.examScope === "all"
+      ) {
+
+        return true;
+
+      }
+
+
+      /*
+      الاختبار المخصص
+      يظهر فقط إذا كان الفصل موجودًا
+      داخل assignedClasses.
+      */
+
+      if (
+        exam.examScope === "selected"
+      ) {
+
+        return (
+          Array.isArray(
+            exam.assignedClasses
+          )
+          &&
+          exam.assignedClasses.includes(
+            className
+          )
+        );
+
+      }
+
+
+      /*
+      حماية للاختبارات القديمة
+      أو القيم غير المعروفة.
+      */
+
+      return true;
+
+    });
+
+}
+
+
+/* =========================================
+   تحميل الدرجات
+========================================= */
+
 async function loadAllGrades() {
+
   allGrades = [];
 
-  const snapshot = await getDocs(collection(db, "grades"));
+  const snapshot =
+    await getDocs(
+      collection(db, "grades")
+    );
 
   snapshot.forEach(item => {
+
     allGrades.push({
       id: item.id,
       ...item.data()
     });
+
   });
+
 }
 
-teacherSelect.addEventListener("change", loadTeacherClasses);
-classSelect.addEventListener("change", loadReportTable);
+
+/* =========================================
+   الأحداث
+========================================= */
+
+teacherSelect.addEventListener(
+  "change",
+  loadTeacherClasses
+);
+
+classSelect.addEventListener(
+  "change",
+  loadReportTable
+);
+
+
+/* =========================================
+   فصول المعلم
+========================================= */
 
 async function loadTeacherClasses() {
-  classSelect.innerHTML = "<option>اختر الفصل</option>";
+
+  classSelect.innerHTML =
+    "<option>اختر الفصل</option>";
+
   tableHead.innerHTML = "";
   tableBody.innerHTML = "";
 
-  const teacherName = teacherSelect.value;
+  exams = [];
 
-  if (teacherName === "اختر المعلم") {
+  const teacherName =
+    teacherSelect.value;
+
+  if (
+    teacherName === "اختر المعلم"
+  ) {
+
     return;
+
   }
 
-  const snapshot = await getDocs(
-    query(
-      collection(db, "assignments"),
-      where("teacherName", "==", teacherName)
-    )
-  );
+  const snapshot =
+    await getDocs(
+      query(
+        collection(
+          db,
+          "assignments"
+        ),
+        where(
+          "teacherName",
+          "==",
+          teacherName
+        )
+      )
+    );
 
   const classes = [];
 
   snapshot.forEach(item => {
-    classes.push(item.data().className);
+
+    const className =
+      item.data().className;
+
+    if (
+      className &&
+      !classes.includes(className)
+    ) {
+
+      classes.push(className);
+
+    }
+
   });
 
   classes.sort((a, b) =>
-    a.localeCompare(b, "ar")
+    a.localeCompare(
+      b,
+      "ar",
+      {
+        numeric: true,
+        sensitivity: "base"
+      }
+    )
   );
 
   classes.forEach(className => {
+
     classSelect.innerHTML += `
       <option>${className}</option>
     `;
+
   });
+
 }
 
-function getChangeLabel(currentPercent, previousPercent) {
-  if (previousPercent === null) {
+
+/* =========================================
+   مؤشر التحسن
+========================================= */
+
+function getChangeLabel(
+  currentPercent,
+  previousPercent
+) {
+
+  if (
+    previousPercent === null
+  ) {
+
     return {
       text: "-",
       color: "#94a3b8"
     };
+
   }
 
-  if (currentPercent > previousPercent) {
+  if (
+    currentPercent >
+    previousPercent
+  ) {
+
     return {
       text: "↑ تحسن",
       color: "#22c55e"
     };
+
   }
 
-  if (currentPercent < previousPercent) {
+  if (
+    currentPercent <
+    previousPercent
+  ) {
+
     return {
       text: "↓ تراجع",
       color: "#ef4444"
     };
+
   }
 
   return {
     text: "→ ثابت",
     color: "#facc15"
   };
+
 }
 
-function getOverallStatus(changes) {
-  const up = changes.filter(item => item === "up").length;
-  const down = changes.filter(item => item === "down").length;
 
-  if (up > down) {
+/* =========================================
+   المستوى العام
+========================================= */
+
+function getOverallStatus(changes) {
+
+  const up =
+    changes.filter(
+      item =>
+        item === "up"
+    ).length;
+
+  const down =
+    changes.filter(
+      item =>
+        item === "down"
+    ).length;
+
+  if (
+    up > down
+  ) {
+
     return {
       text: "تحسن عام",
       color: "#22c55e"
     };
+
   }
 
-  if (down > up) {
+  if (
+    down > up
+  ) {
+
     return {
       text: "تراجع عام",
       color: "#ef4444"
     };
+
   }
 
   return {
     text: "ثابت",
     color: "#facc15"
   };
+
 }
 
+
+/* =========================================
+   عرض نتائج الفصل
+========================================= */
+
 async function loadReportTable() {
+
   tableHead.innerHTML = "";
 
   tableBody.innerHTML = `
     <tr class="loading-row">
-      <td colspan="50">جاري تحميل النتائج...</td>
+      <td colspan="50">
+        جاري تحميل النتائج...
+      </td>
     </tr>
   `;
 
-  const teacherName = teacherSelect.value;
-  const className = classSelect.value;
+  const teacherName =
+    teacherSelect.value;
+
+  const className =
+    classSelect.value;
 
   if (
     teacherName === "اختر المعلم" ||
     className === "اختر الفصل"
   ) {
+
     tableBody.innerHTML = "";
     return;
+
   }
+
+
+  /*
+  هنا التعديل الأساسي:
+  نحدد الاختبارات الخاصة بالفصل
+  قبل إنشاء الجدول.
+  */
+
+  filterExamsForClass(
+    className
+  );
+
 
   await loadAllGrades();
 
-  if (exams.length === 0) {
+
+  /*
+  لو الفصل ليس له أي اختبار
+  عام أو مخصص.
+  */
+
+  if (
+    exams.length === 0
+  ) {
+
     tableBody.innerHTML = `
       <tr>
-        <td colspan="50">لا توجد اختبارات</td>
+        <td colspan="50">
+          لا توجد اختبارات مسندة لهذا الفصل
+        </td>
       </tr>
     `;
+
     return;
+
   }
+
+
+  /* =========================================
+     رأس الجدول
+  ========================================= */
 
   let head = `
     <tr>
       <th>اسم الطالب</th>
   `;
 
+
   exams.forEach(exam => {
+
     head += `
       <th>
         ${exam.examName}
@@ -287,182 +620,493 @@ async function loadReportTable() {
         من ${exam.maxDegree}
       </th>
     `;
+
   });
 
+
   head += `
-      <th>المستوى العام</th>
-      <th>واتساب</th>
+      <th>
+        المستوى العام
+      </th>
+
+      <th>
+        واتساب
+      </th>
     </tr>
   `;
 
-  tableHead.innerHTML = head;
 
-  const studentsSnapshot = await getDocs(
-    query(
-      collection(db, "students"),
-      where("className", "==", className)
-    )
-  );
+  tableHead.innerHTML =
+    head;
+
+
+  /* =========================================
+     الطلاب
+  ========================================= */
+
+  const studentsSnapshot =
+    await getDocs(
+      query(
+        collection(
+          db,
+          "students"
+        ),
+        where(
+          "className",
+          "==",
+          className
+        )
+      )
+    );
+
 
   currentStudents = [];
 
-  studentsSnapshot.forEach(studentDoc => {
-    currentStudents.push(studentDoc.data());
-  });
 
-  currentStudents.sort((a, b) =>
-    a.name.localeCompare(b.name, "ar")
+  studentsSnapshot.forEach(
+    studentDoc => {
+
+      currentStudents.push(
+        studentDoc.data()
+      );
+
+    }
   );
+
+
+  currentStudents.sort(
+    (a, b) =>
+      (a.name || "")
+      .localeCompare(
+        b.name || "",
+        "ar"
+      )
+  );
+
 
   let html = "";
 
-  for (const student of currentStudents) {
+
+  /* =========================================
+     إنشاء صف لكل طالب
+  ========================================= */
+
+  for (
+    const student of currentStudents
+  ) {
+
     html += `
       <tr>
+
         <td class="student-name">
           ${student.name}
         </td>
     `;
 
-    let previousPercent = null;
-    let changes = [];
 
-    for (const exam of exams) {
-      const gradeData = allGrades.find(item =>
-        item.studentName === student.name &&
-        item.className === className &&
-        item.examName === exam.examName &&
-        item.teacherName === teacherName
-      );
+    let previousPercent =
+      null;
 
-      if (gradeData && gradeData.grade !== "") {
-        const percent = exam.maxDegree
-          ? Math.round((Number(gradeData.grade) / Number(exam.maxDegree)) * 100)
-          : 0;
+    let changes =
+      [];
 
-        const change = getChangeLabel(percent, previousPercent);
 
-        if (previousPercent !== null) {
-          if (percent > previousPercent) {
-            changes.push("up");
-          } else if (percent < previousPercent) {
-            changes.push("down");
+    /*
+    مهم:
+    هذه الحلقة تستخدم exams
+    وليس allExams.
+
+    وبالتالي لن يظهر إلا الاختبار
+    المسموح به لهذا الفصل.
+    */
+
+    for (
+      const exam of exams
+    ) {
+
+      const gradeData =
+        allGrades.find(item =>
+
+          item.studentName ===
+            student.name
+
+          &&
+
+          item.className ===
+            className
+
+          &&
+
+          item.examName ===
+            exam.examName
+
+          &&
+
+          item.teacherName ===
+            teacherName
+
+        );
+
+
+      if (
+        gradeData &&
+        gradeData.grade !== ""
+      ) {
+
+        const percent =
+          exam.maxDegree
+          ?
+          Math.round(
+            (
+              Number(
+                gradeData.grade
+              )
+              /
+              Number(
+                exam.maxDegree
+              )
+            )
+            *
+            100
+          )
+          :
+          0;
+
+
+        const change =
+          getChangeLabel(
+            percent,
+            previousPercent
+          );
+
+
+        if (
+          previousPercent !== null
+        ) {
+
+          if (
+            percent >
+            previousPercent
+          ) {
+
+            changes.push(
+              "up"
+            );
+
+          } else if (
+            percent <
+            previousPercent
+          ) {
+
+            changes.push(
+              "down"
+            );
+
           } else {
-            changes.push("stable");
+
+            changes.push(
+              "stable"
+            );
+
           }
+
         }
 
-        previousPercent = percent;
 
-        let color = "#facc15";
+        previousPercent =
+          percent;
 
-        if (percent >= 85) {
-          color = "#22c55e";
-        } else if (percent < 60) {
-          color = "#ef4444";
+
+        let color =
+          "#facc15";
+
+
+        if (
+          percent >= 85
+        ) {
+
+          color =
+            "#22c55e";
+
+        } else if (
+          percent < 60
+        ) {
+
+          color =
+            "#ef4444";
+
         }
+
 
         html += `
           <td>
-            <div style="color:${color};font-weight:800;">
+
+            <div
+              style="
+                color:${color};
+                font-weight:800;
+              "
+            >
               ${gradeData.grade} / ${exam.maxDegree}
             </div>
 
-            <div style="color:${color};font-weight:700;">
+            <div
+              style="
+                color:${color};
+                font-weight:700;
+              "
+            >
               ${percent}%
             </div>
 
-            <div style="color:${change.color};font-weight:900;margin-top:6px;">
+            <div
+              style="
+                color:${change.color};
+                font-weight:900;
+                margin-top:6px;
+              "
+            >
               ${change.text}
             </div>
+
           </td>
         `;
+
+
       } else {
-        html += `<td>-</td>`;
+
+
+        html += `
+          <td>-</td>
+        `;
+
+
       }
+
     }
 
-    const overall = getOverallStatus(changes);
+
+    const overall =
+      getOverallStatus(
+        changes
+      );
+
 
     html += `
-        <td style="color:${overall.color};font-weight:900;">
+
+        <td
+          style="
+            color:${overall.color};
+            font-weight:900;
+          "
+        >
           ${overall.text}
         </td>
 
+
         <td>
+
           <button
             class="primary-btn"
-            style="background:#16a34a;color:white;padding:8px 12px;font-size:12px;"
+
+            style="
+              background:#16a34a;
+              color:white;
+              padding:8px 12px;
+              font-size:12px;
+            "
+
             onclick="sendWhatsApp('${encodeURIComponent(student.name)}')"
           >
             إرسال
           </button>
+
         </td>
+
       </tr>
     `;
+
   }
 
-  tableBody.innerHTML = html;
+
+  tableBody.innerHTML =
+    html;
+
 }
+
+
+/* =========================================
+   تنظيف رقم الجوال
+========================================= */
 
 function cleanPhone(phone) {
-  let value = String(phone || "").trim();
 
-  value = value.replace(/[^\d]/g, "");
+  let value =
+    String(
+      phone || ""
+    ).trim();
 
-  if (value.startsWith("00")) {
-    value = value.slice(2);
-  }
 
-  if (value.startsWith("0")) {
-    value = "966" + value.slice(1);
-  }
-
-  if (!value.startsWith("966")) {
-    value = "966" + value;
-  }
-
-  return value;
-}
-
-window.sendWhatsApp = function(encodedStudentName) {
-  const studentName = decodeURIComponent(encodedStudentName);
-  const teacherName = teacherSelect.value;
-  const className = classSelect.value;
-
-  const supervisorName =
-    localStorage.getItem("supervisorName") || "المشرف";
-
-  const student = currentStudents.find(item =>
-    item.name === studentName
-  );
-
-  if (!student || !student.guardianPhone) {
-    alert("رقم ولي الأمر غير موجود لهذا الطالب");
-    return;
-  }
-
-  const studentGrades = [];
-
-  exams.forEach(exam => {
-    const gradeData = allGrades.find(item =>
-      item.studentName === studentName &&
-      item.className === className &&
-      item.examName === exam.examName &&
-      item.teacherName === teacherName
+  value =
+    value.replace(
+      /[^\d]/g,
+      ""
     );
 
-    if (gradeData && gradeData.grade !== "") {
-      studentGrades.push(
-        `${exam.examName}: ${gradeData.grade} / ${exam.maxDegree}`
+
+  if (
+    value.startsWith("00")
+  ) {
+
+    value =
+      value.slice(2);
+
+  }
+
+
+  if (
+    value.startsWith("0")
+  ) {
+
+    value =
+      "966" +
+      value.slice(1);
+
+  }
+
+
+  if (
+    !value.startsWith("966")
+  ) {
+
+    value =
+      "966" + value;
+
+  }
+
+
+  return value;
+
+}
+
+
+/* =========================================
+   واتساب
+========================================= */
+
+window.sendWhatsApp =
+function(
+  encodedStudentName
+) {
+
+  const studentName =
+    decodeURIComponent(
+      encodedStudentName
+    );
+
+
+  const teacherName =
+    teacherSelect.value;
+
+
+  const className =
+    classSelect.value;
+
+
+  const supervisorName =
+    localStorage.getItem(
+      "supervisorName"
+    )
+    ||
+    "المشرف";
+
+
+  const student =
+    currentStudents.find(
+      item =>
+        item.name ===
+        studentName
+    );
+
+
+  if (
+    !student ||
+    !student.guardianPhone
+  ) {
+
+    alert(
+      "رقم ولي الأمر غير موجود لهذا الطالب"
+    );
+
+    return;
+
+  }
+
+
+  const studentGrades =
+    [];
+
+
+  /*
+  نستخدم exams المفلترة فقط.
+  وبالتالي لن تدخل الاختبارات
+  الخاصة بفصول أخرى في الرسالة.
+  */
+
+  exams.forEach(exam => {
+
+    const gradeData =
+      allGrades.find(item =>
+
+        item.studentName ===
+          studentName
+
+        &&
+
+        item.className ===
+          className
+
+        &&
+
+        item.examName ===
+          exam.examName
+
+        &&
+
+        item.teacherName ===
+          teacherName
+
       );
+
+
+    if (
+      gradeData &&
+      gradeData.grade !== ""
+    ) {
+
+      studentGrades.push(
+
+        `${exam.examName}: ${gradeData.grade} / ${exam.maxDegree}`
+
+      );
+
     }
+
   });
 
-  if (studentGrades.length === 0) {
-    alert("لا توجد درجات مرصودة لهذا الطالب");
+
+  if (
+    studentGrades.length === 0
+  ) {
+
+    alert(
+      "لا توجد درجات مرصودة لهذا الطالب"
+    );
+
     return;
+
   }
+
 
   const message =
 `السلام عليكم ورحمة الله وبركاته
@@ -478,41 +1122,115 @@ ${studentGrades.join("\n")}
 
 مع تمنياتنا له بالتوفيق والنجاح.`;
 
-  const phone = cleanPhone(student.guardianPhone);
+
+  const phone =
+    cleanPhone(
+      student.guardianPhone
+    );
+
 
   const url =
     `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 
-  window.open(url, "_blank");
+
+  window.open(
+    url,
+    "_blank"
+  );
+
 };
 
-window.archiveResults = async function() {
-  const snapshot = await getDocs(collection(db, "grades"));
 
-  for (const item of snapshot.docs) {
-    const data = item.data();
+/* =========================================
+   أرشفة النتائج
+========================================= */
 
-    await addDoc(collection(db, "archive"), {
-      studentName: data.studentName,
-      className: data.className,
-      subject: data.subject,
-      examName: data.examName,
-      grade: data.grade,
-      maxDegree: data.maxDegree || "",
-      teacherName: data.teacherName,
-      archivedAt: new Date().toLocaleString()
-    });
+window.archiveResults =
+async function() {
+
+  const snapshot =
+    await getDocs(
+      collection(
+        db,
+        "grades"
+      )
+    );
+
+
+  for (
+    const item of snapshot.docs
+  ) {
+
+    const data =
+      item.data();
+
+
+    await addDoc(
+      collection(
+        db,
+        "archive"
+      ),
+      {
+
+        studentName:
+          data.studentName,
+
+        className:
+          data.className,
+
+        subject:
+          data.subject,
+
+        examName:
+          data.examName,
+
+        grade:
+          data.grade,
+
+        maxDegree:
+          data.maxDegree || "",
+
+        teacherName:
+          data.teacherName,
+
+        archivedAt:
+          new Date()
+          .toLocaleString()
+
+      }
+    );
+
   }
 
-  alert("تمت أرشفة النتائج");
+
+  alert(
+    "تمت أرشفة النتائج"
+  );
+
 };
 
-window.logout = function() {
+
+/* =========================================
+   تسجيل الخروج
+========================================= */
+
+window.logout =
+function() {
+
   localStorage.clear();
-  window.location.href = "index.html";
+
+  window.location.href =
+    "index.html";
+
 };
+
+
+/* =========================================
+   التشغيل
+========================================= */
 
 await loadExams();
+
 await loadTeachers();
 
 </script>
