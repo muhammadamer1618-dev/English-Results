@@ -134,6 +134,99 @@ color:#94a3b8;
 font-weight:700;
 }
 
+/* ================================
+   إسناد الاختبارات للفصول
+================================ */
+
+.exam-scope-box{
+background:#020617;
+border:1px solid rgba(255,255,255,.08);
+padding:14px;
+border-radius:16px;
+margin-top:12px;
+}
+
+.exam-scope-options{
+display:flex;
+gap:18px;
+flex-wrap:wrap;
+margin-top:10px;
+}
+
+.exam-scope-option{
+display:flex;
+align-items:center;
+gap:8px;
+cursor:pointer;
+font-weight:800;
+}
+
+.exam-scope-option input{
+width:18px;
+height:18px;
+accent-color:#facc15;
+}
+
+.exam-classes-box{
+margin-top:15px;
+max-height:260px;
+overflow-y:auto;
+padding:12px;
+background:#020617;
+border-radius:14px;
+border:1px solid rgba(255,255,255,.08);
+}
+
+.exam-class-actions{
+display:flex;
+gap:8px;
+flex-wrap:wrap;
+margin-bottom:10px;
+}
+
+.exam-class-list{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+gap:8px;
+}
+
+.exam-class-item{
+display:flex;
+align-items:center;
+gap:8px;
+padding:10px;
+background:#111827;
+border-radius:12px;
+cursor:pointer;
+font-weight:800;
+}
+
+.exam-class-item input{
+width:17px;
+height:17px;
+accent-color:#facc15;
+}
+
+.exam-scope-chip{
+display:inline-block;
+padding:5px 9px;
+border-radius:14px;
+font-size:12px;
+font-weight:800;
+background:#111827;
+margin:2px;
+}
+
+.exam-all-chip{
+color:#22c55e;
+border:1px solid rgba(34,197,94,.35);
+}
+
+.exam-selected-chip{
+color:#facc15;
+border:1px solid rgba(250,204,21,.35);
+}
+
 @media(max-width:700px){
 
 .classes-checkbox-grid{
@@ -142,6 +235,10 @@ grid-template-columns:1fr;
 
 .assignment-actions button{
 width:100%;
+}
+
+.exam-class-list{
+grid-template-columns:1fr;
 }
 
 }
@@ -444,7 +541,7 @@ class="hidden"
 </div>
 
 <!-- =========================
-     الإسناد الجديد
+     الإسناد
 ========================= -->
 
 <div class="section" id="assignmentsSection">
@@ -554,6 +651,7 @@ onclick="openModal('exam')"
 <th>الترتيب</th>
 <th>الاختبار</th>
 <th>الدرجة النهائية</th>
+<th>نطاق الاختبار</th>
 <th>الإجراءات</th>
 </tr>
 
@@ -676,6 +774,86 @@ placeholder="الدرجة النهائية"
 />
 </div>
 
+<!-- نطاق الاختبار -->
+
+<div
+class="hidden"
+id="examScopeGroup"
+>
+
+<div class="exam-scope-box">
+
+<div style="font-weight:900;color:#facc15;">
+نطاق الاختبار
+</div>
+
+<div class="exam-scope-options">
+
+<label class="exam-scope-option">
+<input
+type="radio"
+name="examScope"
+value="all"
+id="examScopeAll"
+checked
+>
+<span>جميع الفصول</span>
+</label>
+
+<label class="exam-scope-option">
+<input
+type="radio"
+name="examScope"
+value="selected"
+id="examScopeSelected"
+>
+<span>فصول محددة</span>
+</label>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- فصول الاختبار -->
+
+<div
+class="hidden"
+id="examClassesGroup"
+>
+
+<div class="exam-classes-box">
+
+<div class="exam-class-actions">
+
+<button
+type="button"
+class="primary-btn"
+onclick="selectAllExamClasses()"
+>
+تحديد الكل
+</button>
+
+<button
+type="button"
+class="primary-btn"
+onclick="clearAllExamClasses()"
+>
+إلغاء تحديد الكل
+</button>
+
+</div>
+
+<div
+id="examClassesList"
+class="exam-class-list"
+></div>
+
+</div>
+
+</div>
+
 <div class="modal-actions">
 
 <button
@@ -771,6 +949,154 @@ refreshAssignmentPage();
 };
 
 /* ================================
+   Exam scope controls
+================================ */
+
+function updateExamScopeVisibility(){
+
+const selected =
+document.querySelector(
+'input[name="examScope"]:checked'
+);
+
+if(!selected){
+return;
+}
+
+if(selected.value === "selected"){
+
+document
+.getElementById("examClassesGroup")
+.classList.remove("hidden");
+
+}else{
+
+document
+.getElementById("examClassesGroup")
+.classList.add("hidden");
+
+}
+
+}
+
+document
+.getElementById("examScopeAll")
+.addEventListener(
+"change",
+updateExamScopeVisibility
+);
+
+document
+.getElementById("examScopeSelected")
+.addEventListener(
+"change",
+updateExamScopeVisibility
+);
+
+async function loadExamClassCheckboxes(selectedClasses = []){
+
+const list =
+document.getElementById("examClassesList");
+
+let classes = cachedClasses;
+
+if(classes.length === 0){
+
+const snapshot =
+await getDocs(
+collection(db,"classes")
+);
+
+classes = [];
+
+snapshot.forEach(item=>{
+
+classes.push({
+id:item.id,
+...item.data()
+});
+
+});
+
+classes.sort(
+(a,b)=>
+(a.name || "")
+.localeCompare(
+b.name || "",
+"ar",
+{
+numeric:true,
+sensitivity:"base"
+}
+)
+);
+
+cachedClasses = classes;
+
+}
+
+let html = "";
+
+classes.forEach(item=>{
+
+const checked =
+selectedClasses.includes(item.name)
+?
+"checked"
+:
+"";
+
+html += `
+<label class="exam-class-item">
+
+<input
+type="checkbox"
+class="exam-class-checkbox"
+value="${item.name}"
+${checked}
+>
+
+<span>
+${item.name}
+</span>
+
+</label>
+`;
+
+});
+
+list.innerHTML =
+html;
+
+}
+
+window.selectAllExamClasses =
+function(){
+
+document
+.querySelectorAll(
+".exam-class-checkbox"
+)
+.forEach(item=>{
+item.checked = true;
+});
+
+};
+
+window.clearAllExamClasses =
+function(){
+
+document
+.querySelectorAll(
+".exam-class-checkbox"
+)
+.forEach(item=>{
+item.checked = false;
+});
+
+};
+
+/* ================================
    Modal
 ================================ */
 
@@ -838,6 +1164,14 @@ document
 
 document
 .getElementById("degreeGroup")
+.classList.add("hidden");
+
+document
+.getElementById("examScopeGroup")
+.classList.add("hidden");
+
+document
+.getElementById("examClassesGroup")
 .classList.add("hidden");
 
 /* Teacher */
@@ -951,6 +1285,43 @@ id
 document
 .getElementById("degreeGroup")
 .classList.remove("hidden");
+
+document
+.getElementById("examScopeGroup")
+.classList.remove("hidden");
+
+/*
+الاختبارات القديمة التي لا تحتوي examScope
+ستُعتبر اختبارات عامة حتى لا تتعطل.
+*/
+
+const savedScope =
+data.examScope ||
+"all";
+
+if(savedScope === "selected"){
+
+document
+.getElementById("examScopeSelected")
+.checked = true;
+
+}else{
+
+document
+.getElementById("examScopeAll")
+.checked = true;
+
+}
+
+await loadExamClassCheckboxes(
+Array.isArray(data.assignedClasses)
+?
+data.assignedClasses
+:
+[]
+);
+
+updateExamScopeVisibility();
 
 }
 
@@ -1190,6 +1561,46 @@ return;
 
 }
 
+const scopeElement =
+document.querySelector(
+'input[name="examScope"]:checked'
+);
+
+const examScope =
+scopeElement
+?
+scopeElement.value
+:
+"all";
+
+let assignedClasses = [];
+
+if(
+examScope === "selected"
+){
+
+assignedClasses =
+Array.from(
+document.querySelectorAll(
+".exam-class-checkbox:checked"
+)
+)
+.map(item=>item.value);
+
+if(
+assignedClasses.length === 0
+){
+
+alert(
+"حدد فصلًا واحدًا على الأقل للاختبار"
+);
+
+return;
+
+}
+
+}
+
 let order = 1;
 
 if(!editId){
@@ -1208,10 +1619,16 @@ examsSnapshot.size + 1;
 }
 
 const payload = {
+
 examName:name,
-maxDegree:Number(
-maxDegree
-)
+
+maxDegree:
+Number(maxDegree),
+
+examScope,
+
+assignedClasses
+
 };
 
 if(editId){
@@ -1378,8 +1795,6 @@ teachers.length;
 
 }
 
-/* Delete one teacher */
-
 window.deleteTeacher =
 async function(
 id,
@@ -1392,8 +1807,6 @@ confirm(
 );
 
 if(!ok) return;
-
-/* حذف إسنادات المعلم */
 
 const assignmentsSnapshot =
 await getDocs(
@@ -1439,8 +1852,6 @@ await refreshAssignmentPage();
 
 };
 
-/* Delete ALL teachers */
-
 window.deleteAllTeachers =
 async function(){
 
@@ -1476,8 +1887,6 @@ db,
 )
 );
 
-/* حذف الإسنادات */
-
 await Promise.all(
 assignmentsSnapshot.docs
 .map(item=>
@@ -1490,8 +1899,6 @@ item.id
 )
 )
 );
-
-/* حذف المعلمين */
 
 await Promise.all(
 teachersSnapshot.docs
@@ -1767,8 +2174,6 @@ confirm(
 
 if(!ok) return;
 
-/* حذف إسنادات الفصل */
-
 const assignmentsSnapshot =
 await getDocs(
 collection(
@@ -1812,8 +2217,6 @@ await loadClasses();
 await refreshAssignmentPage();
 
 };
-
-/* Delete ALL classes */
 
 window.deleteAllClasses =
 async function(){
@@ -2103,8 +2506,6 @@ await loadStudents();
 
 };
 
-/* Delete ALL students */
-
 window.deleteAllStudents =
 async function(){
 
@@ -2201,12 +2602,10 @@ await loadStudents();
 };
 
 /* ================================
-   NEW BULK ASSIGNMENT SYSTEM
+   BULK ASSIGNMENT SYSTEM
 ================================ */
 
 async function refreshAssignmentPage(){
-
-/* Teachers */
 
 const teacherSnapshot =
 await getDocs(
@@ -2235,8 +2634,6 @@ b.name || "",
 "ar"
 )
 );
-
-/* Classes */
 
 const classSnapshot =
 await getDocs(
@@ -2270,8 +2667,6 @@ sensitivity:"base"
 )
 );
 
-/* Assignments */
-
 const assignmentSnapshot =
 await getDocs(
 collection(
@@ -2290,8 +2685,6 @@ id:item.id,
 });
 
 });
-
-/* Teacher select */
 
 const currentTeacher =
 bulkTeacherSelect.value;
@@ -2326,17 +2719,11 @@ currentTeacher;
 
 }
 
-/* Render current assignments */
-
 renderAssignments();
-
-/* Render checkboxes */
 
 renderClassCheckboxes();
 
 }
-
-/* When teacher changes */
 
 bulkTeacherSelect.addEventListener(
 "change",
@@ -2443,8 +2830,6 @@ html;
 
 }
 
-/* Select ALL */
-
 window.selectAllClasses =
 function(){
 
@@ -2460,8 +2845,6 @@ checkbox.checked = true;
 
 };
 
-/* Clear ALL checks */
-
 window.clearClassSelection =
 function(){
 
@@ -2476,8 +2859,6 @@ checkbox.checked = false;
 );
 
 };
-
-/* Save bulk assignment */
 
 window.saveBulkAssignment =
 async function(){
@@ -2529,15 +2910,11 @@ return;
 
 try{
 
-/* Current assignments of selected teacher */
-
 const current =
 cachedAssignments.filter(
 item=>
 item.teacherName === teacherName
 );
-
-/* Delete unchecked existing classes */
 
 const toDelete =
 current.filter(
@@ -2559,8 +2936,6 @@ item.id
 )
 )
 );
-
-/* Add missing classes */
 
 const existingClassNames =
 current.map(
@@ -2608,8 +2983,6 @@ alert(
 }
 
 };
-
-/* Current assignment cards */
 
 function renderAssignments(){
 
@@ -2719,8 +3092,6 @@ html;
 
 }
 
-/* Delete one teacher assignment */
-
 window.deleteTeacherAssignments =
 async function(
 teacherName,
@@ -2813,8 +3184,6 @@ alert(
 }
 
 };
-
-/* Delete ALL assignments */
 
 window.deleteAllAssignments =
 async function(){
@@ -2941,6 +3310,53 @@ let html = "";
 exams.forEach(
 exam=>{
 
+const examScope =
+exam.examScope ||
+"all";
+
+let scopeHtml = "";
+
+if(
+examScope === "selected"
+&&
+Array.isArray(
+exam.assignedClasses
+)
+){
+
+if(
+exam.assignedClasses.length > 0
+){
+
+scopeHtml =
+exam.assignedClasses
+.map(className=>`
+<span class="exam-scope-chip exam-selected-chip">
+${className}
+</span>
+`)
+.join("");
+
+}else{
+
+scopeHtml = `
+<span class="exam-scope-chip exam-selected-chip">
+لا توجد فصول
+</span>
+`;
+
+}
+
+}else{
+
+scopeHtml = `
+<span class="exam-scope-chip exam-all-chip">
+جميع الفصول
+</span>
+`;
+
+}
+
 html += `
 <tr>
 
@@ -2954,6 +3370,10 @@ ${exam.examName || ""}
 
 <td>
 ${exam.maxDegree || ""}
+</td>
+
+<td>
+${scopeHtml}
 </td>
 
 <td>
