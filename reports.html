@@ -453,8 +453,21 @@ document.getElementById("tableBody");
 const reportSubtitle =
 document.getElementById("reportSubtitle");
 
+/*
+allExams = جميع الاختبارات الموجودة.
+
+exams = الاختبارات المسموح بها
+للفصل المختار فقط.
+*/
+
+let allExams = [];
 let exams = [];
 let allGrades = [];
+
+
+/* ========================================
+   تحميل المعلمين
+======================================== */
 
 async function loadTeachers(){
 
@@ -469,7 +482,19 @@ collection(db,"teachers")
 const teachers = [];
 
 snapshot.forEach(item=>{
-teachers.push(item.data().name);
+
+const name =
+item.data().name;
+
+if(
+name &&
+!teachers.includes(name)
+){
+
+teachers.push(name);
+
+}
+
 });
 
 teachers.sort((a,b)=>
@@ -477,16 +502,23 @@ a.localeCompare(b,"ar")
 );
 
 teachers.forEach(name=>{
+
 teacherSelect.innerHTML += `
 <option>${name}</option>
 `;
+
 });
 
 }
 
+
+/* ========================================
+   تحميل جميع الاختبارات
+======================================== */
+
 async function loadExams(){
 
-exams = [];
+allExams = [];
 
 const snapshot =
 await getDocs(
@@ -495,21 +527,113 @@ collection(db,"exams")
 
 snapshot.forEach(item=>{
 
-const data = item.data();
+const data =
+item.data();
 
-exams.push({
-examName:data.examName,
-maxDegree:Number(data.maxDegree || 0),
-order:Number(data.order || 999)
+allExams.push({
+
+id:item.id,
+
+examName:
+data.examName,
+
+maxDegree:
+Number(
+data.maxDegree || 0
+),
+
+order:
+Number(
+data.order || 999
+),
+
+/*
+الاختبارات القديمة التي ليس لديها
+examScope تعتبر عامة.
+*/
+
+examScope:
+data.examScope || "all",
+
+assignedClasses:
+Array.isArray(
+data.assignedClasses
+)
+?
+data.assignedClasses
+:
+[]
+
 });
 
 });
 
-exams.sort((a,b)=>
+allExams.sort((a,b)=>
 a.order - b.order
 );
 
 }
+
+
+/* ========================================
+   فلترة اختبارات الفصل
+======================================== */
+
+function filterExamsForClass(className){
+
+exams =
+allExams.filter(exam=>{
+
+/*
+الاختبار العام.
+*/
+
+if(
+!exam.examScope ||
+exam.examScope === "all"
+){
+
+return true;
+
+}
+
+
+/*
+اختبار مخصص لفصول معينة.
+*/
+
+if(
+exam.examScope === "selected"
+){
+
+return (
+Array.isArray(
+exam.assignedClasses
+)
+&&
+exam.assignedClasses.includes(
+className
+)
+);
+
+}
+
+
+/*
+أي اختبار قديم أو قيمة غير معروفة
+يعتبر عامًا حماية للبيانات القديمة.
+*/
+
+return true;
+
+});
+
+}
+
+
+/* ========================================
+   تحميل الدرجات
+======================================== */
 
 async function loadAllGrades(){
 
@@ -521,13 +645,20 @@ collection(db,"grades")
 );
 
 snapshot.forEach(item=>{
+
 allGrades.push({
 id:item.id,
 ...item.data()
 });
+
 });
 
 }
+
+
+/* ========================================
+   الأحداث
+======================================== */
 
 teacherSelect.addEventListener(
 "change",
@@ -539,6 +670,11 @@ classSelect.addEventListener(
 loadReport
 );
 
+
+/* ========================================
+   تحميل فصول المعلم
+======================================== */
+
 async function loadTeacherClasses(){
 
 classSelect.innerHTML =
@@ -546,6 +682,27 @@ classSelect.innerHTML =
 
 tableHead.innerHTML = "";
 tableBody.innerHTML = "";
+
+exams = [];
+
+reportSubtitle.innerText =
+"اختر المعلم والفصل لعرض التقرير";
+
+document.getElementById(
+"studentsCount"
+).innerText = "0";
+
+document.getElementById(
+"classAverage"
+).innerText = "0%";
+
+document.getElementById(
+"improvedCount"
+).innerText = "0";
+
+document.getElementById(
+"declinedCount"
+).innerText = "0";
 
 const teacherName =
 teacherSelect.value;
@@ -560,49 +717,94 @@ const snapshot =
 await getDocs(
 query(
 collection(db,"assignments"),
-where("teacherName","==",teacherName)
+where(
+"teacherName",
+"==",
+teacherName
+)
 )
 );
 
 const classes = [];
 
 snapshot.forEach(item=>{
-classes.push(item.data().className);
+
+const className =
+item.data().className;
+
+if(
+className &&
+!classes.includes(className)
+){
+
+classes.push(className);
+
+}
+
 });
 
 classes.sort((a,b)=>
-a.localeCompare(b,"ar")
+a.localeCompare(
+b,
+"ar",
+{
+numeric:true,
+sensitivity:"base"
+}
+)
 );
 
 classes.forEach(className=>{
+
 classSelect.innerHTML += `
 <option>${className}</option>
 `;
+
 });
 
 }
 
-function getChangeLabel(currentPercent, previousPercent){
+
+/* ========================================
+   مؤشر التغير
+======================================== */
+
+function getChangeLabel(
+currentPercent,
+previousPercent
+){
 
 if(previousPercent === null){
+
 return{
 text:"-",
 key:"none"
 };
+
 }
 
-if(currentPercent > previousPercent){
+if(
+currentPercent >
+previousPercent
+){
+
 return{
 text:"↑ تحسن",
 key:"up"
 };
+
 }
 
-if(currentPercent < previousPercent){
+if(
+currentPercent <
+previousPercent
+){
+
 return{
 text:"↓ تراجع",
 key:"down"
 };
+
 }
 
 return{
@@ -611,6 +813,11 @@ key:"stable"
 };
 
 }
+
+
+/* ========================================
+   المستوى العام
+======================================== */
 
 function getOverallStatus(changes){
 
@@ -625,17 +832,21 @@ item=>item==="down"
 ).length;
 
 if(up > down){
+
 return{
 text:"تحسن",
 key:"up"
 };
+
 }
 
 if(down > up){
+
 return{
 text:"تراجع",
 key:"down"
 };
+
 }
 
 return{
@@ -644,6 +855,11 @@ key:"stable"
 };
 
 }
+
+
+/* ========================================
+   تحميل التقرير
+======================================== */
 
 async function loadReport(){
 
@@ -668,19 +884,87 @@ teacherName === "اختر المعلم"
 ||
 className === "اختر الفصل"
 ){
+
 tableBody.innerHTML = "";
 return;
+
 }
+
+
+/*
+أهم تعديل:
+نحدد الاختبارات الخاصة بالفصل
+قبل إنشاء التقرير.
+*/
+
+filterExamsForClass(
+className
+);
+
+
+/*
+إذا لم يكن هناك أي اختبار مسند
+لهذا الفصل.
+*/
+
+if(
+exams.length === 0
+){
 
 reportSubtitle.innerText =
 `المعلم: ${teacherName} | الفصل: ${className}`;
 
+tableHead.innerHTML = "";
+
+tableBody.innerHTML = `
+<tr>
+<td colspan="50">
+لا توجد اختبارات مسندة لهذا الفصل
+</td>
+</tr>
+`;
+
+document.getElementById(
+"studentsCount"
+).innerText = "0";
+
+document.getElementById(
+"classAverage"
+).innerText = "0%";
+
+document.getElementById(
+"improvedCount"
+).innerText = "0";
+
+document.getElementById(
+"declinedCount"
+).innerText = "0";
+
+return;
+
+}
+
+
+reportSubtitle.innerText =
+`المعلم: ${teacherName} | الفصل: ${className}`;
+
+
 await loadAllGrades();
+
+
+/* ========================================
+   رأس الجدول
+======================================== */
 
 let head = `
 <tr>
 <th>اسم الطالب</th>
 `;
+
+
+/*
+نستخدم exams المفلترة فقط.
+*/
 
 exams.forEach(exam=>{
 
@@ -694,42 +978,83 @@ ${exam.examName}
 
 });
 
+
 head += `
 <th>المتوسط</th>
 <th>المستوى العام</th>
 </tr>
 `;
 
-tableHead.innerHTML = head;
+
+tableHead.innerHTML =
+head;
+
+
+/* ========================================
+   الطلاب
+======================================== */
 
 const studentsSnapshot =
 await getDocs(
 query(
 collection(db,"students"),
-where("className","==",className)
+where(
+"className",
+"==",
+className
+)
 )
 );
 
+
 const students = [];
 
-studentsSnapshot.forEach(studentDoc=>{
-students.push(studentDoc.data());
-});
 
-students.sort((a,b)=>
-a.name.localeCompare(b.name,"ar")
+studentsSnapshot.forEach(
+studentDoc=>{
+
+students.push(
+studentDoc.data()
 );
 
+}
+);
+
+
+students.sort((a,b)=>
+(a.name || "")
+.localeCompare(
+b.name || "",
+"ar"
+)
+);
+
+
+/* ========================================
+   الإحصائيات
+======================================== */
+
 let studentsCount = 0;
+
 let classTotalPercent = 0;
+
 let improvedCount = 0;
+
 let declinedCount = 0;
 
 let html = "";
 
-for(const student of students){
+
+/* ========================================
+   إنشاء التقرير
+======================================== */
+
+for(
+const student of students
+){
 
 studentsCount++;
+
 
 let row = `
 <tr>
@@ -739,41 +1064,76 @@ ${student.name}
 </td>
 `;
 
-let previousPercent = null;
-let changes = [];
 
-let studentTotalPercent = 0;
-let studentGradeCount = 0;
+let previousPercent =
+null;
 
-for(const exam of exams){
+let changes =
+[];
+
+let studentTotalPercent =
+0;
+
+let studentGradeCount =
+0;
+
+
+/*
+نمر فقط على الاختبارات
+المسموح بها لهذا الفصل.
+*/
+
+for(
+const exam of exams
+){
 
 const gradeData =
 allGrades.find(item=>
 
-item.studentName === student.name
+item.studentName ===
+student.name
+
 &&
-item.className === className
+
+item.className ===
+className
+
 &&
-item.examName === exam.examName
+
+item.examName ===
+exam.examName
+
 &&
-item.teacherName === teacherName
+
+item.teacherName ===
+teacherName
 
 );
 
-if(gradeData){
+
+if(
+gradeData &&
+gradeData.grade !== ""
+){
 
 const percent =
 exam.maxDegree
 ?
 Math.round(
 (
-Number(gradeData.grade)
+Number(
+gradeData.grade
+)
 /
-Number(exam.maxDegree)
+Number(
+exam.maxDegree
+)
 )
 *100
 )
-:0;
+:
+0;
+
 
 const change =
 getChangeLabel(
@@ -781,36 +1141,69 @@ percent,
 previousPercent
 );
 
-if(change.key !== "none"){
-changes.push(change.key);
+
+if(
+change.key !== "none"
+){
+
+changes.push(
+change.key
+);
+
 }
 
-previousPercent = percent;
 
-studentTotalPercent += percent;
+previousPercent =
+percent;
+
+
+studentTotalPercent +=
+percent;
+
+
 studentGradeCount++;
+
 
 row += `
 <td>
 
-<div class="score-line" style="font-weight:900;">
+<div
+class="score-line"
+style="
+font-weight:900;
+"
+>
 ${gradeData.grade} / ${exam.maxDegree}
 </div>
 
-<div style="font-weight:900;">
+<div
+style="
+font-weight:900;
+"
+>
 ${change.text}
 </div>
 
 </td>
 `;
 
+
 }else{
 
-row += `<td>-</td>`;
+
+row += `
+<td>-</td>
+`;
+
 
 }
 
 }
+
+
+/* ========================================
+   متوسط الطالب
+======================================== */
 
 const average =
 studentGradeCount
@@ -820,43 +1213,87 @@ studentTotalPercent
 /
 studentGradeCount
 )
-:0;
+:
+0;
 
-classTotalPercent += average;
+
+classTotalPercent +=
+average;
+
+
+/* ========================================
+   المستوى العام
+======================================== */
 
 const overall =
-getOverallStatus(changes);
+getOverallStatus(
+changes
+);
 
-if(overall.key === "up"){
+
+if(
+overall.key === "up"
+){
+
 improvedCount++;
+
 }
 
-if(overall.key === "down"){
+
+if(
+overall.key === "down"
+){
+
 declinedCount++;
+
 }
+
 
 row += `
-<td class="percent-line" style="font-weight:900;">
+<td
+class="percent-line"
+style="
+font-weight:900;
+"
+>
 ${average}%
 </td>
 
-<td style="font-weight:900;">
+<td
+style="
+font-weight:900;
+"
+>
 ${overall.text}
 </td>
 
 </tr>
 `;
 
-html += row;
+
+html +=
+row;
 
 }
 
-tableBody.innerHTML = html;
+
+/* ========================================
+   عرض التقرير
+======================================== */
+
+tableBody.innerHTML =
+html;
+
+
+/* ========================================
+   الإحصائيات النهائية
+======================================== */
 
 document.getElementById(
 "studentsCount"
 ).innerText =
 studentsCount;
+
 
 document.getElementById(
 "classAverage"
@@ -873,10 +1310,12 @@ studentsCount
 :
 "0%";
 
+
 document.getElementById(
 "improvedCount"
 ).innerText =
 improvedCount;
+
 
 document.getElementById(
 "declinedCount"
@@ -885,7 +1324,13 @@ declinedCount;
 
 }
 
-window.logout = function(){
+
+/* ========================================
+   تسجيل الخروج
+======================================== */
+
+window.logout =
+function(){
 
 localStorage.clear();
 
@@ -894,7 +1339,13 @@ window.location.href =
 
 };
 
+
+/* ========================================
+   التشغيل
+======================================== */
+
 await loadExams();
+
 await loadTeachers();
 
 </script>
