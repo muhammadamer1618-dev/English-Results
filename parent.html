@@ -273,21 +273,55 @@ async function loadExams(){
 
 allExams = [];
 
-const snapshot = await getDocs(collection(db,"exams"));
+const snapshot = await getDocs(
+collection(db,"exams")
+);
 
 snapshot.forEach(item=>{
 
 const data = item.data();
 
 allExams.push({
+id:item.id,
 examName:data.examName,
 maxDegree:Number(data.maxDegree || 0),
-order:Number(data.order || 999)
+order:Number(data.order || 999),
+examScope:data.examScope || "all",
+assignedClasses:Array.isArray(data.assignedClasses)
+? data.assignedClasses
+: []
 });
 
 });
 
 allExams.sort((a,b)=>a.order - b.order);
+
+}
+
+function filterExamsForClass(className){
+
+return allExams.filter(exam=>{
+
+if(
+!exam.examScope ||
+exam.examScope === "all"
+){
+return true;
+}
+
+if(
+exam.examScope === "selected"
+){
+return (
+Array.isArray(exam.assignedClasses)
+&&
+exam.assignedClasses.includes(className)
+);
+}
+
+return true;
+
+});
 
 }
 
@@ -325,7 +359,8 @@ return "normal";
 
 window.searchStudents = async function(){
 
-const phoneInput = document.getElementById("guardianPhoneInput").value.trim();
+const phoneInput =
+document.getElementById("guardianPhoneInput").value.trim();
 
 if(!phoneInput){
 alert("أدخل رقم جوال ولي الأمر");
@@ -337,7 +372,8 @@ document.getElementById("childrenArea").innerHTML = "";
 
 const inputPhone = cleanPhone(phoneInput);
 
-const studentsSnapshot = await getDocs(collection(db,"students"));
+const studentsSnapshot =
+await getDocs(collection(db,"students"));
 
 matchedStudents = [];
 
@@ -348,7 +384,11 @@ id:item.id,
 ...item.data()
 };
 
-if(cleanPhone(student.guardianPhone) === inputPhone){
+if(
+cleanPhone(student.guardianPhone)
+===
+inputPhone
+){
 matchedStudents.push(student);
 }
 
@@ -360,7 +400,10 @@ return;
 }
 
 matchedStudents.sort((a,b)=>
-(a.name || "").localeCompare(b.name || "","ar")
+(a.name || "").localeCompare(
+b.name || "",
+"ar"
+)
 );
 
 if(matchedStudents.length === 1){
@@ -373,7 +416,10 @@ let html = "";
 matchedStudents.forEach((student,index)=>{
 
 html += `
-<div class="child-card" onclick="loadStudentReport(${index})">
+<div
+class="child-card"
+onclick="loadStudentReport(${index})"
+>
 <div style="color:#facc15;font-size:17px;margin-bottom:8px;">
 ${student.name || "-"}
 </div>
@@ -399,6 +445,11 @@ return;
 
 await loadExams();
 
+const allowedExams =
+filterExamsForClass(
+student.className
+);
+
 const gradesSnapshot = await getDocs(
 query(
 collection(db,"grades"),
@@ -423,34 +474,60 @@ where("className","==",student.className)
 let teacherName = "-";
 
 assignmentSnapshot.forEach(item=>{
-teacherName = item.data().teacherName || "-";
+teacherName =
+item.data().teacherName || "-";
 });
 
-document.getElementById("studentNameBox").innerText = student.name || "-";
-document.getElementById("classNameBox").innerText = student.className || "-";
-document.getElementById("teacherNameBox").innerText = teacherName;
+document.getElementById("studentNameBox").innerText =
+student.name || "-";
+
+document.getElementById("classNameBox").innerText =
+student.className || "-";
+
+document.getElementById("teacherNameBox").innerText =
+teacherName;
 
 let html = "";
 let previousPercent = null;
 let totalPercent = 0;
 let count = 0;
 
-allExams.forEach(exam=>{
+allowedExams.forEach(exam=>{
 
-const gradeData = grades.find(item=>item.examName === exam.examName);
+const gradeData =
+grades.find(item=>
+item.examName === exam.examName
+);
 
-if(gradeData && gradeData.grade !== ""){
+if(
+gradeData &&
+gradeData.grade !== ""
+){
 
-const grade = Number(gradeData.grade);
-const maxDegree = Number(gradeData.maxDegree || exam.maxDegree || 0);
+const grade =
+Number(gradeData.grade);
 
-const percent = maxDegree
+const maxDegree =
+Number(
+gradeData.maxDegree ||
+exam.maxDegree ||
+0
+);
+
+const percent =
+maxDegree
 ?
-Math.round((grade / maxDegree) * 100)
+Math.round(
+(grade / maxDegree) * 100
+)
 :
 0;
 
-const change = getChange(percent,previousPercent);
+const change =
+getChange(
+percent,
+previousPercent
+);
 
 previousPercent = percent;
 totalPercent += percent;
@@ -482,25 +559,58 @@ html += `
 
 });
 
-const average = count ? Math.round(totalPercent / count) : 0;
+if(allowedExams.length === 0){
 
-document.getElementById("averageBox").innerText = average + "%";
-document.getElementById("gradesTable").innerHTML = html;
+html = `
+<tr>
+<td colspan="5">
+لا توجد اختبارات مسندة لفصل الطالب حتى الآن
+</td>
+</tr>
+`;
 
-const supportLevel = getSupportLevel(average);
-const supportMessage = document.getElementById("supportMessage");
+}
 
-if(supportLevel === "care"){
+const average =
+count
+?
+Math.round(
+totalPercent / count
+)
+:
+0;
+
+document.getElementById("averageBox").innerText =
+average + "%";
+
+document.getElementById("gradesTable").innerHTML =
+html;
+
+const supportLevel =
+getSupportLevel(average);
+
+const supportMessage =
+document.getElementById("supportMessage");
+
+if(
+count > 0 &&
+supportLevel === "care"
+){
 
 supportMessage.style.display = "block";
 supportMessage.style.background = "#f97316";
+
 supportMessage.innerText =
 "المكرم ولي أمر الطالب، نحيطكم علمًا بأنه تم إدراج ابنكم ضمن برنامج دعم الطلاب في مادة اللغة الإنجليزية، وذلك بهدف تعزيز مستوى التحصيل الدراسي ومعالجة جوانب الضعف الأكاديمية من خلال خطة دعم ومتابعة تعليمية مستمرة.";
 
-}else if(supportLevel === "case"){
+}else if(
+count > 0 &&
+supportLevel === "case"
+){
 
 supportMessage.style.display = "block";
 supportMessage.style.background = "#dc2626";
+
 supportMessage.innerText =
 "المكرم ولي أمر الطالب، نحيطكم علمًا بأنه تم إدراج ابنكم ضمن برنامج دعم الطلاب المكثف في مادة اللغة الإنجليزية، وذلك نظرًا لحاجته إلى متابعة تعليمية إضافية؛ بهدف رفع مستوى الأداء الأكاديمي وتحسين نتائج الاختبارات القادمة.";
 
