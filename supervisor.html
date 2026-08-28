@@ -246,6 +246,29 @@
   transition:width .25s ease;
 }
 
+
+.rased-results-box{
+  margin-top:18px;
+  border:1px solid #334155;
+  border-radius:12px;
+  overflow:auto;
+}
+
+.rased-result-sent{
+  color:#22c55e;
+  font-weight:900;
+}
+
+.rased-result-failed{
+  color:#ef4444;
+  font-weight:900;
+}
+
+.rased-result-waiting{
+  color:#facc15;
+  font-weight:900;
+}
+
 </style>
 
 </head>
@@ -500,6 +523,28 @@
 
     <div class="rased-progress-bar-wrap">
       <div class="rased-progress-bar" id="rasedProgressBar"></div>
+    </div>
+
+    <div class="rased-results-box">
+      <table>
+        <thead>
+          <tr>
+            <th>م</th>
+            <th>الطالب</th>
+            <th>الفصل</th>
+            <th>رقم ولي الأمر</th>
+            <th>الحالة</th>
+            <th>التفاصيل</th>
+          </tr>
+        </thead>
+        <tbody id="rasedSendResultsBody">
+          <tr>
+            <td colspan="6" class="message-empty">
+              ستظهر هنا نتيجة كل رسالة أثناء الإرسال
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
@@ -819,6 +864,7 @@ const rasedTotalCount = document.getElementById("rasedTotalCount");
 const rasedSentCount = document.getElementById("rasedSentCount");
 const rasedFailedCount = document.getElementById("rasedFailedCount");
 const rasedProgressBar = document.getElementById("rasedProgressBar");
+const rasedSendResultsBody = document.getElementById("rasedSendResultsBody");
 
 
 let allExams = [];
@@ -833,6 +879,7 @@ let bulkSelectedIds = new Set();
 let bulkQueue = [];
 let bulkQueueIndex = 0;
 let bulkActiveMessage = "";
+let rasedSendResults = [];
 
 
 window.showSection =
@@ -2189,6 +2236,65 @@ function updateRasedProgressUI(data){
   rasedProgressBar.style.width = percent + "%";
 }
 
+function renderRasedSendResults(){
+  if(!rasedSendResults.length){
+    rasedSendResultsBody.innerHTML = `
+      <tr>
+        <td colspan="6" class="message-empty">
+          ستظهر هنا نتيجة كل رسالة أثناء الإرسال
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  rasedSendResultsBody.innerHTML = rasedSendResults.map((item,index)=>{
+    const statusClass = item.status === "sent"
+      ? "rased-result-sent"
+      : item.status === "failed"
+        ? "rased-result-failed"
+        : "rased-result-waiting";
+
+    const statusText = item.status === "sent"
+      ? "تم الإرسال"
+      : item.status === "failed"
+        ? "فشل"
+        : "جاري الإرسال";
+
+    return `
+      <tr>
+        <td>${index + 1}</td>
+        <td class="student-name">${escapeHtml(item.studentName || "-")}</td>
+        <td>${escapeHtml(item.className || "-")}</td>
+        <td>${escapeHtml(item.phone || "-")}</td>
+        <td class="${statusClass}">${statusText}</td>
+        <td>${escapeHtml(item.error || (item.status === "sent" ? "تم تنفيذ الإرسال" : "-"))}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function upsertRasedSendResult(data,status){
+  const key = data.archiveId || data.studentId || `${data.phone}_${data.current}`;
+  const existingIndex = rasedSendResults.findIndex(item=>item.key === key);
+  const next = {
+    key,
+    studentName:data.studentName || "",
+    className:data.className || "",
+    phone:data.phone || "",
+    status,
+    error:data.error || ""
+  };
+
+  if(existingIndex >= 0){
+    rasedSendResults[existingIndex] = { ...rasedSendResults[existingIndex], ...next };
+  }else{
+    rasedSendResults.push(next);
+  }
+
+  renderRasedSendResults();
+}
+
 window.addEventListener("message",async event=>{
   const data = event.data;
   if(event.source !== window || data?.source !== "RASED_EXTENSION" || data?.type !== "BULK_PROGRESS") return;
@@ -2203,15 +2309,18 @@ window.addEventListener("message",async event=>{
     statusBox.innerText = `بدأ الإرسال التلقائي: 0 من ${data.total}`;
   }
   else if(data.status === "opening"){
+    upsertRasedSendResult(data,"opening");
     statusBox.style.color = "#38bdf8";
     statusBox.innerText = `جاري تجهيز ${data.current} من ${data.total}: ${data.studentName || ""}`;
   }
   else if(data.status === "sent"){
+    upsertRasedSendResult(data,"sent");
     await updateRasedArchiveStatus(data.archiveId,"تم الإرسال");
     statusBox.style.color = "#22c55e";
     statusBox.innerText = `تم الإرسال إلى ${data.studentName || "ولي الأمر"} — النجاح ${data.sentCount} / الفشل ${data.failedCount} / الإجمالي ${data.total}`;
   }
   else if(data.status === "failed"){
+    upsertRasedSendResult(data,"failed");
     await updateRasedArchiveStatus(data.archiveId,"فشل الإرسال",data.error || "تعذر الإرسال");
     statusBox.style.color = "#ef4444";
     statusBox.innerText = `تعذر الإرسال إلى ${data.studentName || "ولي الأمر"}: ${data.error || "خطأ"} — سيتم الانتقال تلقائيًا للرقم التالي.`;
@@ -2255,6 +2364,9 @@ window.startAutomaticBulkSending = async function(){
   if(!confirm(`سيتم إرسال الرسالة تلقائيًا إلى ${selected.length} ولي أمر عبر WhatsApp Web. هل تريد المتابعة؟`)){
     return;
   }
+
+  rasedSendResults = [];
+  renderRasedSendResults();
 
   const queue = [];
 
