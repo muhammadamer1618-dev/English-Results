@@ -5,6 +5,53 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Teacher Panel</title>
 <link rel="stylesheet" href="style.css"/>
+
+<style>
+.message-tools{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:15px;
+  margin-bottom:20px;
+}
+
+.message-text{
+  max-width:360px;
+  white-space:pre-wrap;
+  line-height:1.8;
+  font-size:13px;
+}
+
+.status-sent{
+  display:inline-block;
+  background:#14532d;
+  color:#bbf7d0;
+  padding:5px 10px;
+  border-radius:10px;
+  font-weight:bold;
+  white-space:nowrap;
+}
+
+.message-action-btn{
+  border:none;
+  border-radius:8px;
+  padding:7px 10px;
+  cursor:pointer;
+  font-family:'Cairo',sans-serif;
+  font-weight:bold;
+}
+
+.delete-message-btn{
+  background:#dc2626;
+  color:white;
+}
+
+.message-empty{
+  text-align:center;
+  padding:25px;
+  color:#94a3b8;
+}
+</style>
+
 </head>
 
 <body>
@@ -12,55 +59,143 @@
 <div class="dashboard-layout">
 
 <div class="sidebar">
-  <div class="logo-box">Rased<br>Insights</div>
+
+  <div class="logo-box">
+    Rased<br>Insights
+  </div>
 
   <div class="user-box">
-    <div class="user-title">المعلم الحالي</div>
-    <div class="user-name" id="teacherName">Teacher</div>
+
+    <div class="user-title">
+      المعلم الحالي
+    </div>
+
+    <div
+      class="user-name"
+      id="teacherName"
+    >
+      Teacher
+    </div>
+
   </div>
 
   <div class="menu">
-    <button onclick="showSection('gradesSection')">إدخال الدرجات</button>
-    <button class="logout-btn" onclick="logout()">تسجيل الخروج</button>
+
+    <button
+      onclick="showSection('gradesSection')"
+    >
+      إدخال الدرجات
+    </button>
+
+    <button
+      onclick="showMessagesSection()"
+    >
+      سجل الرسائل
+    </button>
+
+    <button
+      class="logout-btn"
+      onclick="logout()"
+    >
+      تسجيل الخروج
+    </button>
+
   </div>
+
 </div>
+
 
 <div class="main">
 
-<div class="section active-section" id="gradesSection">
+
+<!-- =====================================
+     الدرجات
+===================================== -->
+
+<div
+  class="section active-section"
+  id="gradesSection"
+>
 
   <div class="section-header">
-    <div class="section-title">إدخال درجات الطلاب</div>
+
+    <div class="section-title">
+      إدخال درجات الطلاب
+    </div>
+
   </div>
 
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px;margin-bottom:25px;">
+
+  <div
+    style="
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+      gap:15px;
+      margin-bottom:25px;
+    "
+  >
 
     <div class="input-group">
+
       <select id="classSelect">
-        <option>اختر الفصل</option>
+
+        <option>
+          اختر الفصل
+        </option>
+
       </select>
+
     </div>
 
-    <div class="input-group">
-      <input type="text" value="لغة إنجليزية" readonly/>
-    </div>
 
     <div class="input-group">
+
+      <input
+        type="text"
+        value="لغة إنجليزية"
+        readonly
+      />
+
+    </div>
+
+
+    <div class="input-group">
+
       <select id="clearExamSelect">
-        <option>اختر اختبار للتفريغ</option>
+
+        <option>
+          اختر اختبار للتفريغ
+        </option>
+
       </select>
+
     </div>
 
   </div>
+
 
   <div style="overflow:auto;">
+
     <table>
+
       <thead id="tableHead"></thead>
+
       <tbody id="tableBody"></tbody>
+
     </table>
+
   </div>
 
-  <div style="margin-top:20px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap;">
+
+  <div
+    style="
+      margin-top:20px;
+      display:flex;
+      justify-content:center;
+      gap:12px;
+      flex-wrap:wrap;
+    "
+  >
 
     <button
       class="primary-btn"
@@ -69,17 +204,25 @@
       حفظ جميع الدرجات
     </button>
 
+
     <button
       class="primary-btn"
-      style="background:#dc2626;color:white;"
+      style="
+        background:#dc2626;
+        color:white;
+      "
       onclick="clearSelectedExam()"
     >
       تفريغ الاختبار المحدد
     </button>
 
+
     <button
       class="primary-btn"
-      style="background:#7f1d1d;color:white;"
+      style="
+        background:#7f1d1d;
+        color:white;
+      "
       onclick="clearAllExams()"
     >
       تفريغ جميع الاختبارات
@@ -89,9 +232,159 @@
 
 </div>
 
+
+<!-- =====================================
+     سجل الرسائل
+===================================== -->
+
+<div
+  class="section"
+  id="messagesSection"
+>
+
+  <div class="section-header">
+
+    <div class="section-title">
+      سجل رسائل أولياء الأمور
+    </div>
+
+  </div>
+
+
+  <div class="message-tools">
+
+    <div class="input-group">
+
+      <input
+        type="text"
+        id="messageSearch"
+        placeholder="بحث باسم الطالب..."
+      />
+
+    </div>
+
+
+    <div class="input-group">
+
+      <select id="messageClassFilter">
+
+        <option value="">
+          جميع الفصول
+        </option>
+
+      </select>
+
+    </div>
+
+  </div>
+
+
+  <div
+    style="
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:20px;
+    "
+  >
+
+    <button
+      class="primary-btn"
+      onclick="printMessages()"
+    >
+      طباعة السجل
+    </button>
+
+
+    <button
+      class="primary-btn"
+      style="
+        background:#7f1d1d;
+        color:white;
+      "
+      onclick="deleteAllTeacherMessages()"
+    >
+      حذف جميع الرسائل
+    </button>
+
+  </div>
+
+
+  <div style="overflow:auto;">
+
+    <table>
+
+      <thead>
+
+        <tr>
+
+          <th>
+            م
+          </th>
+
+          <th>
+            الطالب
+          </th>
+
+          <th>
+            الفصل
+          </th>
+
+          <th>
+            رقم ولي الأمر
+          </th>
+
+          <th>
+            الرسالة
+          </th>
+
+          <th>
+            التاريخ
+          </th>
+
+          <th>
+            الوقت
+          </th>
+
+          <th>
+            الحالة
+          </th>
+
+          <th>
+            حذف
+          </th>
+
+        </tr>
+
+      </thead>
+
+      <tbody id="messagesTableBody">
+
+        <tr>
+
+          <td
+            colspan="9"
+            class="message-empty"
+          >
+            لا توجد رسائل
+          </td>
+
+        </tr>
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</div>
+
+
 </div>
 
 </div>
+
+
 
 <script type="module">
 
@@ -105,8 +398,12 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
-  doc
-} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+  doc,
+  serverTimestamp
+}
+from
+"https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+
 
 
 /* =========================================
@@ -114,10 +411,16 @@ import {
 ========================================= */
 
 if (
-  localStorage.getItem("rasedRole") !== "teacher"
+  localStorage.getItem("rasedRole")
+  !==
+  "teacher"
 ) {
-  window.location.href = "index.html";
+
+  window.location.href =
+    "index.html";
+
 }
+
 
 
 /* =========================================
@@ -125,10 +428,17 @@ if (
 ========================================= */
 
 const teacherName =
-  localStorage.getItem("teacherName");
+  localStorage.getItem(
+    "teacherName"
+  );
 
-document.getElementById("teacherName").innerText =
-  teacherName || "Teacher";
+document
+  .getElementById(
+    "teacherName"
+  )
+  .innerText =
+    teacherName || "Teacher";
+
 
 
 /* =========================================
@@ -136,59 +446,104 @@ document.getElementById("teacherName").innerText =
 ========================================= */
 
 const classSelect =
-  document.getElementById("classSelect");
+  document.getElementById(
+    "classSelect"
+  );
 
 const clearExamSelect =
-  document.getElementById("clearExamSelect");
+  document.getElementById(
+    "clearExamSelect"
+  );
 
 const tableHead =
-  document.getElementById("tableHead");
+  document.getElementById(
+    "tableHead"
+  );
 
 const tableBody =
-  document.getElementById("tableBody");
+  document.getElementById(
+    "tableBody"
+  );
+
+const messagesTableBody =
+  document.getElementById(
+    "messagesTableBody"
+  );
+
+const messageSearch =
+  document.getElementById(
+    "messageSearch"
+  );
+
+const messageClassFilter =
+  document.getElementById(
+    "messageClassFilter"
+  );
+
 
 
 /* =========================================
    المتغيرات
 ========================================= */
 
-/*
-allExams
-كل الاختبارات الموجودة في النظام.
-
-exams
-الاختبارات المسموح بها للفصل المختار فقط.
-*/
-
 let allExams = [];
+
 let exams = [];
+
 let allGrades = [];
+
 let currentStudents = [];
+
+let teacherMessages = [];
+
 
 
 /* =========================================
    الأقسام
 ========================================= */
 
-window.showSection = function(id) {
+window.showSection =
+function(id) {
 
   document
-    .querySelectorAll(".section")
-    .forEach(section => {
+    .querySelectorAll(
+      ".section"
+    )
+    .forEach(
+      section => {
 
-      section.classList.remove(
-        "active-section"
-      );
+        section
+          .classList
+          .remove(
+            "active-section"
+          );
 
-    });
+      }
+    );
+
 
   document
     .getElementById(id)
-    .classList.add(
+    .classList
+    .add(
       "active-section"
     );
 
 };
+
+
+
+window.showMessagesSection =
+async function() {
+
+  window.showSection(
+    "messagesSection"
+  );
+
+  await loadTeacherMessages();
+
+};
+
 
 
 /* =========================================
@@ -200,83 +555,111 @@ async function loadTeacherClasses() {
   classSelect.innerHTML =
     "<option>اختر الفصل</option>";
 
+
   const snapshot =
     await getDocs(
+
       query(
-        collection(db, "assignments"),
+
+        collection(
+          db,
+          "assignments"
+        ),
+
         where(
           "teacherName",
           "==",
           teacherName
         )
+
       )
+
     );
 
+
   const classes = [];
+
 
   snapshot.forEach(item => {
 
     const className =
       item.data().className;
 
+
     if (
       className &&
-      !classes.includes(className)
+      !classes.includes(
+        className
+      )
     ) {
-      classes.push(className);
+
+      classes.push(
+        className
+      );
+
     }
 
   });
 
+
   classes.sort(
-    (a, b) =>
+    (a,b) =>
       a.localeCompare(
         b,
         "ar",
         {
-          numeric: true,
-          sensitivity: "base"
+          numeric:true,
+          sensitivity:"base"
         }
       )
   );
 
-  classes.forEach(className => {
 
-    classSelect.innerHTML += `
-      <option value="${className}">
-        ${className}
-      </option>
-    `;
+  classes.forEach(
+    className => {
 
-  });
+      classSelect.innerHTML += `
+        <option value="${className}">
+          ${className}
+        </option>
+      `;
+
+    }
+  );
 
 }
 
 
+
 /* =========================================
-   تحميل جميع الاختبارات من الأدمن
+   تحميل جميع الاختبارات
 ========================================= */
 
 async function loadAllExams() {
 
   allExams = [];
 
+
   const snapshot =
     await getDocs(
+
       collection(
         db,
         "exams"
       )
+
     );
+
 
   snapshot.forEach(item => {
 
     const data =
       item.data();
 
+
     allExams.push({
 
-      id: item.id,
+      id:item.id,
 
       examName:
         data.examName,
@@ -290,11 +673,6 @@ async function loadAllExams() {
         Number(
           data.order || 999
         ),
-
-      /*
-      الاختبار القديم الذي ليس لديه examScope
-      يُعتبر عامًا.
-      */
 
       examScope:
         data.examScope || "all",
@@ -312,16 +690,18 @@ async function loadAllExams() {
 
   });
 
+
   allExams.sort(
-    (a, b) =>
+    (a,b) =>
       a.order - b.order
   );
 
 }
 
 
+
 /* =========================================
-   تحديد الاختبارات الخاصة بالفصل
+   فلترة الاختبارات حسب الفصل
 ========================================= */
 
 function filterExamsForClass(
@@ -331,49 +711,44 @@ function filterExamsForClass(
   exams =
     allExams.filter(exam => {
 
-      /*
-      الاختبار العام
-      يظهر لكل الفصول.
-      */
-
       if (
         !exam.examScope ||
         exam.examScope === "all"
       ) {
+
         return true;
+
       }
 
-      /*
-      الاختبار المحدد لفصول معينة.
-      */
 
       if (
         exam.examScope === "selected"
       ) {
 
         return (
+
           Array.isArray(
             exam.assignedClasses
           )
+
           &&
-          exam.assignedClasses.includes(
-            className
-          )
+
+          exam.assignedClasses
+            .includes(
+              className
+            )
+
         );
 
       }
 
-      /*
-      حماية إضافية:
-      أي اختبار قديم أو قيمة غير معروفة
-      يعتبر عامًا.
-      */
 
       return true;
 
     });
 
 }
+
 
 
 /* =========================================
@@ -384,6 +759,7 @@ function updateClearExamSelect() {
 
   clearExamSelect.innerHTML =
     "<option>اختر اختبار للتفريغ</option>";
+
 
   exams.forEach(exam => {
 
@@ -398,6 +774,7 @@ function updateClearExamSelect() {
 }
 
 
+
 /* =========================================
    تحميل درجات المعلم
 ========================================= */
@@ -406,31 +783,42 @@ async function loadAllGrades() {
 
   allGrades = [];
 
+
   const snapshot =
     await getDocs(
+
       query(
+
         collection(
           db,
           "grades"
         ),
+
         where(
           "teacherName",
           "==",
           teacherName
         )
+
       )
+
     );
+
 
   snapshot.forEach(item => {
 
     allGrades.push({
-      id: item.id,
+
+      id:item.id,
+
       ...item.data()
+
     });
 
   });
 
 }
+
 
 
 /* =========================================
@@ -443,20 +831,25 @@ classSelect.addEventListener(
 );
 
 
+
 /* =========================================
-   عرض الطلاب واختبارات الفصل
+   عرض الطلاب
 ========================================= */
 
 async function loadStudentsTable() {
 
   tableHead.innerHTML = "";
+
   tableBody.innerHTML = "";
+
 
   const className =
     classSelect.value;
 
+
   if (
-    className === "اختر الفصل"
+    className ===
+    "اختر الفصل"
   ) {
 
     exams = [];
@@ -468,33 +861,27 @@ async function loadStudentsTable() {
   }
 
 
-  /*
-  أولًا نحدد الاختبارات المسموح بها
-  لهذا الفصل فقط.
-  */
-
   filterExamsForClass(
     className
   );
+
 
   updateClearExamSelect();
 
 
   tableBody.innerHTML = `
     <tr class="loading-row">
+
       <td colspan="50">
         جاري تحميل الطلاب...
       </td>
+
     </tr>
   `;
 
 
   await loadAllGrades();
 
-
-  /*
-  لا توجد اختبارات عامة أو مسندة لهذا الفصل.
-  */
 
   if (
     exams.length === 0
@@ -504,9 +891,11 @@ async function loadStudentsTable() {
 
     tableBody.innerHTML = `
       <tr>
+
         <td colspan="50">
           لا توجد اختبارات مسندة لهذا الفصل
         </td>
+
       </tr>
     `;
 
@@ -515,60 +904,70 @@ async function loadStudentsTable() {
   }
 
 
-  /* =========================================
-     رأس الجدول
-  ========================================= */
 
   let head = `
     <tr>
+
       <th>
         اسم الطالب
       </th>
   `;
 
+
   exams.forEach(exam => {
 
     head += `
       <th>
+
         ${exam.examName}
+
         <br>
+
         من ${exam.maxDegree}
+
       </th>
     `;
 
   });
 
+
   head += `
       <th>
         واتساب
       </th>
+
     </tr>
   `;
+
 
   tableHead.innerHTML =
     head;
 
 
-  /* =========================================
-     تحميل الطلاب
-  ========================================= */
 
   const studentsSnapshot =
     await getDocs(
+
       query(
+
         collection(
           db,
           "students"
         ),
+
         where(
           "className",
           "==",
           className
         )
+
       )
+
     );
 
+
   currentStudents = [];
+
 
   studentsSnapshot.forEach(
     studentDoc => {
@@ -580,8 +979,9 @@ async function loadStudentsTable() {
     }
   );
 
+
   currentStudents.sort(
-    (a, b) =>
+    (a,b) =>
       (a.name || "")
       .localeCompare(
         b.name || "",
@@ -590,15 +990,16 @@ async function loadStudentsTable() {
   );
 
 
-  /* =========================================
-     إنشاء الصفوف
-  ========================================= */
 
   let html = "";
 
+
   for (
-    const student of currentStudents
+    const student
+    of
+    currentStudents
   ) {
+
 
     html += `
       <tr>
@@ -610,29 +1011,37 @@ async function loadStudentsTable() {
 
 
     for (
-      const exam of exams
+      const exam
+      of
+      exams
     ) {
 
+
       const existingGrade =
-        allGrades.find(item =>
+        allGrades.find(
+          item =>
 
-          item.studentName ===
-            student.name
+            item.studentName
+              ===
+              student.name
 
-          &&
+            &&
 
-          item.className ===
-            className
+            item.className
+              ===
+              className
 
-          &&
+            &&
 
-          item.examName ===
-            exam.examName
+            item.examName
+              ===
+              exam.examName
 
-          &&
+            &&
 
-          item.teacherName ===
-            teacherName
+            item.teacherName
+              ===
+              teacherName
 
         );
 
@@ -709,6 +1118,7 @@ async function loadStudentsTable() {
 }
 
 
+
 /* =========================================
    تنظيف رقم الجوال
 ========================================= */
@@ -720,11 +1130,13 @@ function cleanPhone(phone) {
       phone || ""
     ).trim();
 
+
   value =
     value.replace(
       /[^\d]/g,
       ""
     );
+
 
   if (
     value.startsWith("00")
@@ -735,36 +1147,43 @@ function cleanPhone(phone) {
 
   }
 
+
   if (
     value.startsWith("0")
   ) {
 
     value =
-      "966" +
+      "966"
+      +
       value.slice(1);
 
   }
+
 
   if (
     !value.startsWith("966")
   ) {
 
     value =
-      "966" + value;
+      "966"
+      +
+      value;
 
   }
+
 
   return value;
 
 }
 
 
+
 /* =========================================
-   إرسال النتائج عبر واتساب
+   إرسال واتساب وحفظ السجل
 ========================================= */
 
 window.sendWhatsApp =
-function(
+async function(
   encodedStudentName
 ) {
 
@@ -773,6 +1192,7 @@ function(
       encodedStudentName
     );
 
+
   const className =
     classSelect.value;
 
@@ -780,8 +1200,7 @@ function(
   const student =
     currentStudents.find(
       item =>
-        item.name ===
-        studentName
+        item.name === studentName
     );
 
 
@@ -799,38 +1218,40 @@ function(
   }
 
 
+
   const studentGrades = [];
 
+  const gradesForArchive = [];
 
-  /*
-  مهم:
-  نستخدم exams فقط.
-  وبالتالي لن ترسل الرسالة
-  إلا الاختبارات الخاصة بهذا الفصل.
-  */
 
   exams.forEach(exam => {
 
+
     const gradeData =
-      allGrades.find(item =>
+      allGrades.find(
+        item =>
 
-        item.studentName ===
-          studentName
+          item.studentName
+            ===
+            studentName
 
-        &&
+          &&
 
-        item.className ===
-          className
+          item.className
+            ===
+            className
 
-        &&
+          &&
 
-        item.examName ===
-          exam.examName
+          item.examName
+            ===
+            exam.examName
 
-        &&
+          &&
 
-        item.teacherName ===
-          teacherName
+          item.teacherName
+            ===
+            teacherName
 
       );
 
@@ -840,15 +1261,35 @@ function(
       gradeData.grade !== ""
     ) {
 
+
       studentGrades.push(
 
         `${exam.examName}: ${gradeData.grade} / ${exam.maxDegree}`
 
       );
 
+
+      gradesForArchive.push({
+
+        examName:
+          exam.examName,
+
+        grade:
+          Number(
+            gradeData.grade
+          ),
+
+        maxDegree:
+          Number(
+            exam.maxDegree
+          )
+
+      });
+
     }
 
   });
+
 
 
   if (
@@ -862,6 +1303,7 @@ function(
     return;
 
   }
+
 
 
   const message =
@@ -879,10 +1321,78 @@ ${studentGrades.join("\n")}
 مع تمنياتنا له بالتوفيق والنجاح.`;
 
 
+
   const phone =
     cleanPhone(
       student.guardianPhone
     );
+
+
+
+  try {
+
+
+    await addDoc(
+
+      collection(
+        db,
+        "parentMessages"
+      ),
+
+      {
+
+        studentName:
+          studentName,
+
+        className:
+          className,
+
+        guardianPhone:
+          phone,
+
+        teacherName:
+          teacherName,
+
+        subject:
+          "لغة إنجليزية",
+
+        messageType:
+          "نتائج اختبارات",
+
+        messageText:
+          message,
+
+        grades:
+          gradesForArchive,
+
+        status:
+          "تم الإرسال",
+
+        sentAt:
+          serverTimestamp()
+
+      }
+
+    );
+
+
+  }
+  catch(error) {
+
+
+    console.error(
+      error
+    );
+
+
+    alert(
+      "حدث خطأ أثناء حفظ سجل الرسالة، ولم يتم فتح واتساب."
+    );
+
+    return;
+
+  }
+
 
 
   const url =
@@ -894,7 +1404,960 @@ ${studentGrades.join("\n")}
     "_blank"
   );
 
+
 };
+
+
+
+/* =========================================
+   سجل رسائل المعلم
+========================================= */
+
+async function loadTeacherMessages() {
+
+  messagesTableBody.innerHTML = `
+    <tr>
+
+      <td
+        colspan="9"
+        class="message-empty"
+      >
+        جاري تحميل السجل...
+      </td>
+
+    </tr>
+  `;
+
+
+  teacherMessages = [];
+
+
+  try {
+
+
+    const snapshot =
+      await getDocs(
+
+        query(
+
+          collection(
+            db,
+            "parentMessages"
+          ),
+
+          where(
+            "teacherName",
+            "==",
+            teacherName
+          )
+
+        )
+
+      );
+
+
+    snapshot.forEach(item => {
+
+      teacherMessages.push({
+
+        id:item.id,
+
+        ...item.data()
+
+      });
+
+    });
+
+
+
+    teacherMessages.sort(
+      (a,b) => {
+
+        const aTime =
+          a.sentAt?.seconds || 0;
+
+        const bTime =
+          b.sentAt?.seconds || 0;
+
+        return bTime - aTime;
+
+      }
+    );
+
+
+    updateMessageClassFilter();
+
+
+    renderMessages();
+
+
+  }
+  catch(error) {
+
+
+    console.error(error);
+
+
+    messagesTableBody.innerHTML = `
+      <tr>
+
+        <td
+          colspan="9"
+          class="message-empty"
+        >
+          تعذر تحميل سجل الرسائل
+        </td>
+
+      </tr>
+    `;
+
+  }
+
+}
+
+
+
+/* =========================================
+   فلتر الفصول في السجل
+========================================= */
+
+function updateMessageClassFilter() {
+
+  const currentValue =
+    messageClassFilter.value;
+
+
+  const classes = [
+    ...new Set(
+      teacherMessages
+        .map(
+          item => item.className
+        )
+        .filter(Boolean)
+    )
+  ];
+
+
+  classes.sort(
+    (a,b) =>
+      a.localeCompare(
+        b,
+        "ar",
+        {
+          numeric:true
+        }
+      )
+  );
+
+
+  messageClassFilter.innerHTML =
+    `
+      <option value="">
+        جميع الفصول
+      </option>
+    `;
+
+
+  classes.forEach(
+    className => {
+
+      messageClassFilter.innerHTML += `
+        <option value="${className}">
+          ${className}
+        </option>
+      `;
+
+    }
+  );
+
+
+  if (
+    classes.includes(
+      currentValue
+    )
+  ) {
+
+    messageClassFilter.value =
+      currentValue;
+
+  }
+
+}
+
+
+
+/* =========================================
+   تحويل تاريخ الرسالة
+========================================= */
+
+function getMessageDate(
+  sentAt
+) {
+
+  if (
+    !sentAt ||
+    !sentAt.toDate
+  ) {
+
+    return {
+      date:"-",
+      time:"-"
+    };
+
+  }
+
+
+  const date =
+    sentAt.toDate();
+
+
+  return {
+
+    date:
+      date.toLocaleDateString(
+        "ar-SA"
+      ),
+
+    time:
+      date.toLocaleTimeString(
+        "ar-SA",
+        {
+          hour:"2-digit",
+          minute:"2-digit"
+        }
+      )
+
+  };
+
+}
+
+
+
+/* =========================================
+   حماية النص داخل HTML
+========================================= */
+
+function escapeHtml(value) {
+
+  return String(
+    value || ""
+  )
+
+  .replace(
+    /&/g,
+    "&amp;"
+  )
+
+  .replace(
+    /</g,
+    "&lt;"
+  )
+
+  .replace(
+    />/g,
+    "&gt;"
+  )
+
+  .replace(
+    /"/g,
+    "&quot;"
+  )
+
+  .replace(
+    /'/g,
+    "&#039;"
+  );
+
+}
+
+
+
+/* =========================================
+   عرض الرسائل
+========================================= */
+
+function renderMessages() {
+
+  const searchValue =
+    messageSearch.value
+      .trim()
+      .toLowerCase();
+
+
+  const selectedClass =
+    messageClassFilter.value;
+
+
+  const filtered =
+    teacherMessages.filter(
+      item => {
+
+
+        const matchesName =
+          !searchValue
+          ||
+          String(
+            item.studentName || ""
+          )
+          .toLowerCase()
+          .includes(
+            searchValue
+          );
+
+
+        const matchesClass =
+          !selectedClass
+          ||
+          item.className
+            ===
+            selectedClass;
+
+
+        return (
+          matchesName
+          &&
+          matchesClass
+        );
+
+      }
+    );
+
+
+  if (
+    filtered.length === 0
+  ) {
+
+    messagesTableBody.innerHTML = `
+      <tr>
+
+        <td
+          colspan="9"
+          class="message-empty"
+        >
+          لا توجد رسائل مطابقة
+        </td>
+
+      </tr>
+    `;
+
+    return;
+
+  }
+
+
+
+  let html = "";
+
+
+  filtered.forEach(
+    (item,index) => {
+
+
+      const dateInfo =
+        getMessageDate(
+          item.sentAt
+        );
+
+
+      html += `
+        <tr>
+
+          <td>
+            ${index + 1}
+          </td>
+
+          <td class="student-name">
+            ${escapeHtml(item.studentName)}
+          </td>
+
+          <td>
+            ${escapeHtml(item.className)}
+          </td>
+
+          <td>
+            ${escapeHtml(item.guardianPhone)}
+          </td>
+
+          <td>
+
+            <div class="message-text">
+              ${escapeHtml(item.messageText)}
+            </div>
+
+          </td>
+
+          <td>
+            ${dateInfo.date}
+          </td>
+
+          <td>
+            ${dateInfo.time}
+          </td>
+
+          <td>
+
+            <span class="status-sent">
+              ${escapeHtml(item.status || "تم الإرسال")}
+            </span>
+
+          </td>
+
+          <td>
+
+            <button
+              class="
+                message-action-btn
+                delete-message-btn
+              "
+              onclick="deleteTeacherMessage('${item.id}')"
+            >
+              حذف
+            </button>
+
+          </td>
+
+        </tr>
+      `;
+
+    }
+  );
+
+
+  messagesTableBody.innerHTML =
+    html;
+
+}
+
+
+
+/* =========================================
+   البحث والتصفية
+========================================= */
+
+messageSearch.addEventListener(
+  "input",
+  renderMessages
+);
+
+
+messageClassFilter.addEventListener(
+  "change",
+  renderMessages
+);
+
+
+
+/* =========================================
+   حذف رسالة واحدة
+========================================= */
+
+window.deleteTeacherMessage =
+async function(messageId) {
+
+
+  const message =
+    teacherMessages.find(
+      item =>
+        item.id === messageId
+    );
+
+
+  if (
+    !message
+  ) {
+
+    return;
+
+  }
+
+
+  const confirmDelete =
+    confirm(
+      `هل تريد حذف رسالة الطالب "${message.studentName}" من السجل؟`
+    );
+
+
+  if (
+    !confirmDelete
+  ) {
+
+    return;
+
+  }
+
+
+  try {
+
+
+    await deleteDoc(
+
+      doc(
+        db,
+        "parentMessages",
+        messageId
+      )
+
+    );
+
+
+    teacherMessages =
+      teacherMessages.filter(
+        item =>
+          item.id !== messageId
+      );
+
+
+    updateMessageClassFilter();
+
+    renderMessages();
+
+
+    alert(
+      "تم حذف الرسالة من السجل"
+    );
+
+
+  }
+  catch(error) {
+
+
+    console.error(error);
+
+
+    alert(
+      "تعذر حذف الرسالة"
+    );
+
+  }
+
+};
+
+
+
+/* =========================================
+   حذف جميع رسائل المعلم
+========================================= */
+
+window.deleteAllTeacherMessages =
+async function() {
+
+
+  if (
+    teacherMessages.length === 0
+  ) {
+
+    alert(
+      "لا توجد رسائل للحذف"
+    );
+
+    return;
+
+  }
+
+
+  const confirmDelete =
+    confirm(
+      "هل أنت متأكد من حذف جميع رسائل هذا المعلم؟ لا يمكن التراجع عن هذه العملية."
+    );
+
+
+  if (
+    !confirmDelete
+  ) {
+
+    return;
+
+  }
+
+
+  try {
+
+
+    for (
+      const item
+      of
+      teacherMessages
+    ) {
+
+      await deleteDoc(
+
+        doc(
+          db,
+          "parentMessages",
+          item.id
+        )
+
+      );
+
+    }
+
+
+    teacherMessages = [];
+
+
+    updateMessageClassFilter();
+
+    renderMessages();
+
+
+    alert(
+      "تم حذف جميع الرسائل"
+    );
+
+
+  }
+  catch(error) {
+
+
+    console.error(error);
+
+
+    alert(
+      "حدث خطأ أثناء حذف الرسائل"
+    );
+
+  }
+
+};
+
+
+
+/* =========================================
+   طباعة سجل الرسائل
+========================================= */
+
+window.printMessages =
+function() {
+
+
+  const searchValue =
+    messageSearch.value
+      .trim()
+      .toLowerCase();
+
+
+  const selectedClass =
+    messageClassFilter.value;
+
+
+  const filtered =
+    teacherMessages.filter(
+      item => {
+
+
+        const matchesName =
+          !searchValue
+          ||
+          String(
+            item.studentName || ""
+          )
+          .toLowerCase()
+          .includes(
+            searchValue
+          );
+
+
+        const matchesClass =
+          !selectedClass
+          ||
+          item.className
+            ===
+            selectedClass;
+
+
+        return (
+          matchesName
+          &&
+          matchesClass
+        );
+
+      }
+    );
+
+
+  if (
+    filtered.length === 0
+  ) {
+
+    alert(
+      "لا توجد رسائل للطباعة"
+    );
+
+    return;
+
+  }
+
+
+
+  let rows = "";
+
+
+  filtered.forEach(
+    (item,index) => {
+
+
+      const dateInfo =
+        getMessageDate(
+          item.sentAt
+        );
+
+
+      rows += `
+        <tr>
+
+          <td>
+            ${index + 1}
+          </td>
+
+          <td>
+            ${escapeHtml(item.studentName)}
+          </td>
+
+          <td>
+            ${escapeHtml(item.className)}
+          </td>
+
+          <td>
+            ${escapeHtml(item.guardianPhone)}
+          </td>
+
+          <td class="message-cell">
+            ${escapeHtml(item.messageText)}
+          </td>
+
+          <td>
+            ${dateInfo.date}
+          </td>
+
+          <td>
+            ${dateInfo.time}
+          </td>
+
+          <td>
+            ${escapeHtml(item.status || "تم الإرسال")}
+          </td>
+
+        </tr>
+      `;
+
+    }
+  );
+
+
+
+  const printWindow =
+    window.open(
+      "",
+      "_blank"
+    );
+
+
+  if (
+    !printWindow
+  ) {
+
+    alert(
+      "تعذر فتح نافذة الطباعة"
+    );
+
+    return;
+
+  }
+
+
+
+  printWindow.document.write(`
+<!DOCTYPE html>
+
+<html lang="ar" dir="rtl">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>
+سجل رسائل أولياء الأمور
+</title>
+
+<style>
+
+@page{
+  size:A4 landscape;
+  margin:10mm;
+}
+
+body{
+  font-family:Arial,Tahoma,sans-serif;
+  direction:rtl;
+  color:#000;
+  background:#fff;
+}
+
+h1{
+  text-align:center;
+  font-size:20px;
+  margin-bottom:5px;
+}
+
+h2{
+  text-align:center;
+  font-size:15px;
+  margin:0 0 20px;
+}
+
+.info{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:15px;
+  font-size:13px;
+  font-weight:bold;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:11px;
+}
+
+th,
+td{
+  border:1px solid #000;
+  padding:6px;
+  vertical-align:top;
+  text-align:center;
+}
+
+th{
+  font-weight:bold;
+}
+
+.message-cell{
+  text-align:right;
+  white-space:pre-wrap;
+  line-height:1.6;
+  min-width:260px;
+}
+
+.footer{
+  margin-top:20px;
+  font-size:12px;
+  font-weight:bold;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<h1>
+سجل رسائل أولياء الأمور
+</h1>
+
+
+<h2>
+مادة اللغة الإنجليزية
+</h2>
+
+
+<div class="info">
+
+  <div>
+    المعلم:
+    ${escapeHtml(teacherName)}
+  </div>
+
+  <div>
+    عدد الرسائل:
+    ${filtered.length}
+  </div>
+
+</div>
+
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>
+م
+</th>
+
+<th>
+الطالب
+</th>
+
+<th>
+الفصل
+</th>
+
+<th>
+رقم ولي الأمر
+</th>
+
+<th>
+نص الرسالة
+</th>
+
+<th>
+التاريخ
+</th>
+
+<th>
+الوقت
+</th>
+
+<th>
+الحالة
+</th>
+
+</tr>
+
+</thead>
+
+
+<tbody>
+
+${rows}
+
+</tbody>
+
+</table>
+
+
+<div class="footer">
+
+مشرف اللغة الإنجليزية:
+محمد عامر أحمد
+
+</div>
+
+
+<script>
+
+window.onload = function(){
+
+  window.print();
+
+};
+
+<\/script>
+
+
+</body>
+
+</html>
+  `);
+
+
+  printWindow.document.close();
+
+};
+
 
 
 /* =========================================
@@ -904,12 +2367,14 @@ ${studentGrades.join("\n")}
 window.saveAllGrades =
 async function() {
 
+
   const className =
     classSelect.value;
 
 
   if (
-    className === "اختر الفصل"
+    className ===
+    "اختر الفصل"
   ) {
 
     alert(
@@ -921,6 +2386,7 @@ async function() {
   }
 
 
+
   const inputs =
     document.querySelectorAll(
       ".grade-input"
@@ -928,19 +2394,25 @@ async function() {
 
 
   for (
-    const input of inputs
+    const input
+    of
+    inputs
   ) {
+
 
     const studentName =
       input.dataset.student;
 
+
     const examName =
       input.dataset.exam;
+
 
     const maxDegree =
       Number(
         input.dataset.max
       );
+
 
     const value =
       input.value.trim();
@@ -985,68 +2457,94 @@ async function() {
     }
 
 
+
     const existing =
-      allGrades.find(item =>
+      allGrades.find(
+        item =>
 
-        item.studentName ===
-          studentName
+          item.studentName
+            ===
+            studentName
 
-        &&
+          &&
 
-        item.className ===
-          className
+          item.className
+            ===
+            className
 
-        &&
+          &&
 
-        item.examName ===
-          examName
+          item.examName
+            ===
+            examName
 
-        &&
+          &&
 
-        item.teacherName ===
-          teacherName
+          item.teacherName
+            ===
+            teacherName
 
       );
+
 
 
     if (
       existing
     ) {
 
+
       await updateDoc(
+
         doc(
           db,
           "grades",
           existing.id
         ),
+
         {
           grade,
           maxDegree
         }
+
       );
 
-    } else {
+
+    }
+    else {
+
 
       await addDoc(
+
         collection(
           db,
           "grades"
         ),
+
         {
+
           teacherName,
+
           studentName,
+
           className,
+
           subject:
             "لغة إنجليزية",
+
           examName,
+
           grade,
+
           maxDegree
+
         }
+
       );
 
     }
 
   }
+
 
 
   alert(
@@ -1059,6 +2557,7 @@ async function() {
 };
 
 
+
 /* =========================================
    تفريغ اختبار محدد
 ========================================= */
@@ -1066,15 +2565,18 @@ async function() {
 window.clearSelectedExam =
 async function() {
 
+
   const className =
     classSelect.value;
+
 
   const examName =
     clearExamSelect.value;
 
 
   if (
-    className === "اختر الفصل"
+    className ===
+    "اختر الفصل"
   ) {
 
     alert(
@@ -1100,15 +2602,12 @@ async function() {
   }
 
 
-  /*
-  حماية إضافية:
-  نتأكد أن الاختبار ظاهر أصلًا لهذا الفصل.
-  */
 
   const allowedExam =
     exams.find(
       exam =>
-        exam.examName ===
+        exam.examName
+        ===
         examName
     );
 
@@ -1126,6 +2625,7 @@ async function() {
   }
 
 
+
   const confirmClear =
     confirm(
       `هل تريد تفريغ درجات "${examName}" لهذا الفصل؟`
@@ -1141,9 +2641,12 @@ async function() {
   }
 
 
+
   const snapshot =
     await getDocs(
+
       query(
+
         collection(
           db,
           "grades"
@@ -1168,22 +2671,29 @@ async function() {
         )
 
       )
+
     );
 
 
+
   for (
-    const item of snapshot.docs
+    const item
+    of
+    snapshot.docs
   ) {
 
     await deleteDoc(
+
       doc(
         db,
         "grades",
         item.id
       )
+
     );
 
   }
+
 
 
   alert(
@@ -1196,12 +2706,14 @@ async function() {
 };
 
 
+
 /* =========================================
    تفريغ جميع اختبارات الفصل
 ========================================= */
 
 window.clearAllExams =
 async function() {
+
 
   const className =
     classSelect.value;
@@ -1221,6 +2733,7 @@ async function() {
   }
 
 
+
   const confirmClear =
     confirm(
       "هل تريد تفريغ جميع درجات هذا الفصل؟"
@@ -1236,9 +2749,12 @@ async function() {
   }
 
 
+
   const snapshot =
     await getDocs(
+
       query(
+
         collection(
           db,
           "grades"
@@ -1257,22 +2773,29 @@ async function() {
         )
 
       )
+
     );
 
 
+
   for (
-    const item of snapshot.docs
+    const item
+    of
+    snapshot.docs
   ) {
 
     await deleteDoc(
+
       doc(
         db,
         "grades",
         item.id
       )
+
     );
 
   }
+
 
 
   alert(
@@ -1283,6 +2806,7 @@ async function() {
   await loadStudentsTable();
 
 };
+
 
 
 /* =========================================
@@ -1300,14 +2824,10 @@ function() {
 };
 
 
+
 /* =========================================
    التشغيل الأولي
 ========================================= */
-
-/*
-نحمل جميع الاختبارات مرة واحدة،
-لكن لا نعرضها حتى يختار المعلم الفصل.
-*/
 
 await loadAllExams();
 
