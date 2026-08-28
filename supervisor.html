@@ -422,10 +422,18 @@
       ></textarea>
     </div>
 
-    <div style="margin-top:14px;">
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
       <button class="primary-btn" onclick="startBulkSending()">
-        بدء الإرسال
+        بدء الإرسال اليدوي
       </button>
+
+      <button class="primary-btn" style="background:#16a34a;color:white;" onclick="startAutomaticBulkSending()">
+        إرسال تلقائي بأداة Rased
+      </button>
+    </div>
+
+    <div id="rasedExtensionStatus" style="margin-top:12px;color:#94a3b8;font-size:13px;font-weight:700;">
+      الإرسال التلقائي يتطلب تثبيت إضافة Rased Sender على Chrome وفتح WhatsApp Web.
     </div>
   </div>
 
@@ -2018,6 +2026,192 @@ bulkTeacherFilter.addEventListener("change", function(){
 
 bulkClassFilter.addEventListener("change", renderBulkStudents);
 bulkStudentSearch.addEventListener("input", renderBulkStudents);
+
+
+function waitForRasedExtension(timeout=1800){
+  return new Promise(resolve=>{
+    const requestId = "rased_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+    let done = false;
+
+    const handler = event=>{
+      const data = event.data;
+      if(
+        event.source === window &&
+        data?.source === "RASED_EXTENSION" &&
+        data?.type === "PONG" &&
+        data?.requestId === requestId
+      ){
+        done = true;
+        window.removeEventListener("message",handler);
+        resolve(true);
+      }
+    };
+
+    window.addEventListener("message",handler);
+    window.postMessage({source:"RASED_SITE",type:"PING",requestId},"*");
+
+    setTimeout(()=>{
+      if(done) return;
+      window.removeEventListener("message",handler);
+      resolve(false);
+    },timeout);
+  });
+}
+
+function sendQueueToRasedExtension(queue){
+  return new Promise(resolve=>{
+    const requestId = "rased_start_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+
+    const handler = event=>{
+      const data = event.data;
+      if(
+        event.source === window &&
+        data?.source === "RASED_EXTENSION" &&
+        data?.type === "START_RESULT" &&
+        data?.requestId === requestId
+      ){
+        window.removeEventListener("message",handler);
+        resolve(data);
+      }
+    };
+
+    window.addEventListener("message",handler);
+    window.postMessage({
+      source:"RASED_SITE",
+      type:"START_BULK_SEND",
+      requestId,
+      queue
+    },"*");
+
+    setTimeout(()=>{
+      window.removeEventListener("message",handler);
+      resolve({ok:false,error:"لم تستجب إضافة Rased"});
+    },5000);
+  });
+}
+
+window.addEventListener("message",event=>{
+  const data = event.data;
+  if(event.source !== window || data?.source !== "RASED_EXTENSION" || data?.type !== "BULK_PROGRESS") return;
+
+  const statusBox = document.getElementById("rasedExtensionStatus");
+  if(!statusBox) return;
+
+  if(data.status === "started"){
+    statusBox.style.color = "#facc15";
+    statusBox.innerText = `بدأ الإرسال التلقائي: 0 من ${data.total}`;
+  }
+  else if(data.status === "opening"){
+    statusBox.style.color = "#38bdf8";
+    statusBox.innerText = `جاري تجهيز ${data.current} من ${data.total}: ${data.studentName || ""}`;
+  }
+  else if(data.status === "sent"){
+    statusBox.style.color = "#22c55e";
+    statusBox.innerText = `تم الإرسال ${data.current} من ${data.total}: ${data.studentName || ""}`;
+  }
+  else if(data.status === "finished"){
+    statusBox.style.color = "#22c55e";
+    statusBox.innerText = `اكتمل الإرسال إلى ${data.total} ولي أمر.`;
+    alert(`اكتمل الإرسال الجماعي إلى ${data.total} ولي أمر`);
+  }
+  else if(data.status === "failed"){
+    statusBox.style.color = "#ef4444";
+    statusBox.innerText = `تعذر الإرسال عند ${data.studentName || "ولي الأمر"}: ${data.error || "خطأ"}`;
+  }
+});
+
+window.startAutomaticBulkSending = async function(){
+  const message = bulkMessageText.value.trim();
+
+  if(bulkSelectedIds.size === 0){
+    alert("اختر طالبًا واحدًا على الأقل");
+    return;
+  }
+
+  if(!message){
+    alert("اكتب الرسالة أولًا");
+    return;
+  }
+
+  const extensionReady = await waitForRasedExtension();
+  if(!extensionReady){
+    alert("إضافة Rased Sender غير مثبتة أو غير مفعلة على Chrome");
+    return;
+  }
+
+  let selected = bulkStudents
+    .filter(item=>bulkSelectedIds.has(item.id))
+    .filter(item=>String(item.guardianPhone || "").trim());
+
+  if(selected.length === 0){
+    alert("لا توجد أرقام أولياء أمور صالحة ضمن الطلاب المحددين");
+    return;
+  }
+
+  if(!confirm(`سيتم إرسال الرسالة تلقائيًا إلى ${selected.length} ولي أمر عبر WhatsApp Web. هل تريد المتابعة؟`)){
+    return;
+  }
+
+  const queue = [];
+
+  try{
+    for(const item of selected){
+      const phone = cleanPhone(item.guardianPhone);
+      const personalizedMessage =
+`السلام عليكم ورحمة الله وبركاته
+
+ولي أمر الطالب: ${item.studentName}
+الفصل: ${item.className}
+
+${message}
+
+المشرف: ${supervisorName}`;
+
+      await addDoc(
+        collection(db,"parentMessages"),
+        {
+          studentName:item.studentName,
+          className:item.className,
+          guardianPhone:phone,
+          teacherName:item.teacherName,
+          senderName:supervisorName,
+          senderRole:"supervisor",
+          subject:"لغة إنجليزية",
+          messageType:"رسالة جماعية - Rased Sender",
+          messageText:personalizedMessage,
+          grades:[],
+          status:"تم الإرسال",
+          sentAt:serverTimestamp()
+        }
+      );
+
+      queue.push({
+        studentId:item.id,
+        studentName:item.studentName,
+        className:item.className,
+        teacherName:item.teacherName,
+        phone,
+        message:personalizedMessage
+      });
+    }
+  }
+  catch(error){
+    console.error(error);
+    alert("حدث خطأ أثناء حفظ سجل الرسائل قبل بدء الإرسال");
+    return;
+  }
+
+  const statusBox = document.getElementById("rasedExtensionStatus");
+  statusBox.style.color = "#facc15";
+  statusBox.innerText = `جاري تشغيل أداة Rased لإرسال ${queue.length} رسالة...`;
+
+  const result = await sendQueueToRasedExtension(queue);
+  if(!result?.ok){
+    statusBox.style.color = "#ef4444";
+    statusBox.innerText = result?.error || "تعذر بدء الإرسال";
+    alert(result?.error || "تعذر بدء الإرسال التلقائي");
+  }
+};
 
 window.startBulkSending = function(){
 
