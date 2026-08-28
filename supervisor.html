@@ -103,6 +103,102 @@
   color:#94a3b8;
 }
 
+
+/* ===== الإرسال الجماعي ===== */
+.bulk-tools{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:15px;
+  margin-bottom:18px;
+}
+
+.bulk-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+  margin:12px 0 18px;
+}
+
+.bulk-counter{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  background:#0f172a;
+  border:1px solid #334155;
+  color:#facc15;
+  padding:9px 14px;
+  border-radius:10px;
+  font-weight:800;
+}
+
+.bulk-message-box{
+  width:100%;
+  min-height:150px;
+  resize:vertical;
+  background:#020617;
+  color:#fff;
+  border:1px solid #475569;
+  border-radius:12px;
+  padding:12px;
+  font-family:'Cairo',sans-serif;
+  line-height:1.8;
+  box-sizing:border-box;
+}
+
+.bulk-send-panel{
+  margin-top:22px;
+  background:#0f172a;
+  border:1px solid #334155;
+  border-radius:14px;
+  padding:18px;
+}
+
+.bulk-send-panel.hidden{
+  display:none;
+}
+
+.bulk-current-card{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:12px;
+  margin:15px 0;
+}
+
+.bulk-current-item{
+  background:#020617;
+  border:1px solid #334155;
+  border-radius:10px;
+  padding:10px 12px;
+}
+
+.bulk-current-label{
+  color:#94a3b8;
+  font-size:12px;
+  margin-bottom:4px;
+}
+
+.bulk-current-value{
+  color:#fff;
+  font-weight:800;
+}
+
+.bulk-progress{
+  color:#facc15;
+  font-weight:900;
+  font-size:18px;
+}
+
+.bulk-checkbox{
+  transform:scale(1.25);
+  cursor:pointer;
+}
+
+.no-phone{
+  color:#f87171;
+  font-weight:800;
+}
+
 </style>
 
 </head>
@@ -141,6 +237,10 @@
 
     <button onclick="showMessagesSection()">
       سجل الرسائل
+    </button>
+
+    <button onclick="showBulkSection()">
+      الإرسال الجماعي
     </button>
 
     <button onclick="window.location.href='analysis.html'">
@@ -239,6 +339,138 @@
 
 </div>
 
+
+
+<div
+  class="section"
+  id="bulkSection"
+>
+
+  <div class="section-header">
+    <div class="section-title">
+      الإرسال الجماعي لأولياء الأمور
+    </div>
+  </div>
+
+  <div class="bulk-tools">
+
+    <div class="input-group">
+      <select id="bulkTeacherFilter">
+        <option value="">جميع المعلمين</option>
+      </select>
+    </div>
+
+    <div class="input-group">
+      <select id="bulkClassFilter">
+        <option value="">جميع الفصول</option>
+      </select>
+    </div>
+
+    <div class="input-group">
+      <input
+        type="text"
+        id="bulkStudentSearch"
+        placeholder="بحث باسم الطالب..."
+      />
+    </div>
+
+  </div>
+
+  <div class="bulk-actions">
+
+    <button class="primary-btn" onclick="selectVisibleBulkStudents()">
+      تحديد الظاهر
+    </button>
+
+    <button class="primary-btn" style="background:#475569;color:white;" onclick="clearBulkSelection()">
+      إلغاء التحديد
+    </button>
+
+    <div class="bulk-counter">
+      المحدد: <span id="bulkSelectedCount">0</span> طالب
+    </div>
+
+  </div>
+
+  <div style="overflow:auto;max-height:420px;">
+    <table>
+      <thead>
+        <tr>
+          <th>اختيار</th>
+          <th>اسم الطالب</th>
+          <th>الفصل</th>
+          <th>المعلم</th>
+          <th>رقم ولي الأمر</th>
+        </tr>
+      </thead>
+      <tbody id="bulkStudentsTableBody">
+        <tr>
+          <td colspan="5" class="message-empty">
+            اضغط على الإرسال الجماعي لتحميل الطلاب
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="margin-top:20px;">
+    <div class="input-group">
+      <textarea
+        id="bulkMessageText"
+        class="bulk-message-box"
+        placeholder="اكتب الرسالة التي تريد إرسالها لأولياء الأمور المحددين..."
+      ></textarea>
+    </div>
+
+    <div style="margin-top:14px;">
+      <button class="primary-btn" onclick="startBulkSending()">
+        بدء الإرسال
+      </button>
+    </div>
+  </div>
+
+  <div id="bulkSendPanel" class="bulk-send-panel hidden">
+
+    <div class="bulk-progress" id="bulkProgressText">
+      ولي الأمر 1 من 1
+    </div>
+
+    <div class="bulk-current-card">
+      <div class="bulk-current-item">
+        <div class="bulk-current-label">الطالب</div>
+        <div class="bulk-current-value" id="bulkCurrentStudent">-</div>
+      </div>
+      <div class="bulk-current-item">
+        <div class="bulk-current-label">الفصل</div>
+        <div class="bulk-current-value" id="bulkCurrentClass">-</div>
+      </div>
+      <div class="bulk-current-item">
+        <div class="bulk-current-label">المعلم</div>
+        <div class="bulk-current-value" id="bulkCurrentTeacher">-</div>
+      </div>
+      <div class="bulk-current-item">
+        <div class="bulk-current-label">رقم ولي الأمر</div>
+        <div class="bulk-current-value" id="bulkCurrentPhone">-</div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="primary-btn" style="background:#16a34a;color:white;" onclick="sendCurrentBulkWhatsApp()">
+        فتح واتساب وإرسال
+      </button>
+
+      <button class="primary-btn" style="background:#475569;color:white;" onclick="goToNextBulkRecipient()">
+        التالي
+      </button>
+
+      <button class="primary-btn" style="background:#7f1d1d;color:white;" onclick="cancelBulkSending()">
+        إنهاء الإرسال
+      </button>
+    </div>
+
+  </div>
+
+</div>
 
 
 <div
@@ -496,11 +728,32 @@ const messageSenderTypeFilter =
   );
 
 
+const bulkTeacherFilter = document.getElementById("bulkTeacherFilter");
+const bulkClassFilter = document.getElementById("bulkClassFilter");
+const bulkStudentSearch = document.getElementById("bulkStudentSearch");
+const bulkStudentsTableBody = document.getElementById("bulkStudentsTableBody");
+const bulkSelectedCount = document.getElementById("bulkSelectedCount");
+const bulkMessageText = document.getElementById("bulkMessageText");
+const bulkSendPanel = document.getElementById("bulkSendPanel");
+const bulkProgressText = document.getElementById("bulkProgressText");
+const bulkCurrentStudent = document.getElementById("bulkCurrentStudent");
+const bulkCurrentClass = document.getElementById("bulkCurrentClass");
+const bulkCurrentTeacher = document.getElementById("bulkCurrentTeacher");
+const bulkCurrentPhone = document.getElementById("bulkCurrentPhone");
+
+
 let allExams = [];
 let exams = [];
 let allGrades = [];
 let currentStudents = [];
 let allMessages = [];
+
+let bulkStudents = [];
+let bulkAssignments = [];
+let bulkSelectedIds = new Set();
+let bulkQueue = [];
+let bulkQueueIndex = 0;
+let bulkActiveMessage = "";
 
 
 window.showSection =
@@ -537,6 +790,13 @@ async function(){
 
   await loadAllMessages();
 
+};
+
+
+window.showBulkSection =
+async function(){
+  window.showSection("bulkSection");
+  await loadBulkData();
 };
 
 
@@ -1519,6 +1779,380 @@ ${studentGrades.join("\n")}
     "_blank"
   );
 
+};
+
+
+async function loadBulkData(){
+
+  bulkStudentsTableBody.innerHTML = `
+    <tr>
+      <td colspan="5" class="message-empty">
+        جاري تحميل الطلاب...
+      </td>
+    </tr>
+  `;
+
+  try{
+
+    const [studentsSnapshot, assignmentsSnapshot] = await Promise.all([
+      getDocs(collection(db,"students")),
+      getDocs(collection(db,"assignments"))
+    ]);
+
+    bulkAssignments = [];
+    assignmentsSnapshot.forEach(item=>{
+      bulkAssignments.push({ id:item.id, ...item.data() });
+    });
+
+    bulkStudents = [];
+
+    studentsSnapshot.forEach(item=>{
+      const data = item.data();
+      const className = data.className || "";
+
+      const assignment = bulkAssignments.find(a=>
+        a.className === className
+      );
+
+      bulkStudents.push({
+        id:item.id,
+        studentName:data.name || "",
+        className,
+        guardianPhone:data.guardianPhone || "",
+        teacherName:assignment?.teacherName || "غير مسند"
+      });
+    });
+
+    bulkStudents.sort((a,b)=>{
+      const teacherCompare = String(a.teacherName).localeCompare(String(b.teacherName),"ar");
+      if(teacherCompare !== 0) return teacherCompare;
+
+      const classCompare = String(a.className).localeCompare(String(b.className),"ar",{numeric:true});
+      if(classCompare !== 0) return classCompare;
+
+      return String(a.studentName).localeCompare(String(b.studentName),"ar");
+    });
+
+    updateBulkFilters();
+    renderBulkStudents();
+
+  }
+  catch(error){
+    console.error(error);
+    bulkStudentsTableBody.innerHTML = `
+      <tr>
+        <td colspan="5" class="message-empty">
+          تعذر تحميل الطلاب
+        </td>
+      </tr>
+    `;
+  }
+}
+
+function updateBulkFilters(){
+
+  const previousTeacher = bulkTeacherFilter.value;
+  const previousClass = bulkClassFilter.value;
+
+  const teachers = [
+    ...new Set(
+      bulkStudents
+        .map(item=>item.teacherName)
+        .filter(Boolean)
+    )
+  ];
+
+  teachers.sort((a,b)=>a.localeCompare(b,"ar"));
+
+  bulkTeacherFilter.innerHTML = `<option value="">جميع المعلمين</option>`;
+
+  teachers.forEach(name=>{
+    bulkTeacherFilter.innerHTML += `
+      <option value="${escapeHtml(name)}">${escapeHtml(name)}</option>
+    `;
+  });
+
+  if(teachers.includes(previousTeacher)){
+    bulkTeacherFilter.value = previousTeacher;
+  }
+
+  updateBulkClassFilter(previousClass);
+}
+
+function updateBulkClassFilter(previousValue=""){
+
+  const teacher = bulkTeacherFilter.value;
+
+  const source = teacher
+    ? bulkStudents.filter(item=>item.teacherName === teacher)
+    : bulkStudents;
+
+  const classes = [
+    ...new Set(
+      source
+        .map(item=>item.className)
+        .filter(Boolean)
+    )
+  ];
+
+  classes.sort((a,b)=>a.localeCompare(b,"ar",{numeric:true}));
+
+  bulkClassFilter.innerHTML = `<option value="">جميع الفصول</option>`;
+
+  classes.forEach(className=>{
+    bulkClassFilter.innerHTML += `
+      <option value="${escapeHtml(className)}">${escapeHtml(className)}</option>
+    `;
+  });
+
+  if(classes.includes(previousValue)){
+    bulkClassFilter.value = previousValue;
+  }
+}
+
+function getVisibleBulkStudents(){
+
+  const teacher = bulkTeacherFilter.value;
+  const className = bulkClassFilter.value;
+  const search = bulkStudentSearch.value.trim().toLowerCase();
+
+  return bulkStudents.filter(item=>{
+
+    const matchTeacher = !teacher || item.teacherName === teacher;
+    const matchClass = !className || item.className === className;
+    const matchStudent = !search || String(item.studentName).toLowerCase().includes(search);
+
+    return matchTeacher && matchClass && matchStudent;
+  });
+}
+
+function renderBulkStudents(){
+
+  const visible = getVisibleBulkStudents();
+
+  if(visible.length === 0){
+    bulkStudentsTableBody.innerHTML = `
+      <tr>
+        <td colspan="5" class="message-empty">
+          لا توجد نتائج مطابقة
+        </td>
+      </tr>
+    `;
+    updateBulkSelectedCount();
+    return;
+  }
+
+  let html = "";
+
+  visible.forEach(item=>{
+
+    const checked = bulkSelectedIds.has(item.id) ? "checked" : "";
+    const hasPhone = Boolean(String(item.guardianPhone || "").trim());
+
+    html += `
+      <tr>
+        <td>
+          <input
+            type="checkbox"
+            class="bulk-checkbox"
+            ${checked}
+            ${hasPhone ? "" : "disabled"}
+            onchange="toggleBulkStudent('${item.id}', this.checked)"
+          />
+        </td>
+
+        <td class="student-name">${escapeHtml(item.studentName)}</td>
+        <td>${escapeHtml(item.className)}</td>
+        <td>${escapeHtml(item.teacherName)}</td>
+        <td>
+          ${
+            hasPhone
+            ? escapeHtml(item.guardianPhone)
+            : `<span class="no-phone">لا يوجد رقم</span>`
+          }
+        </td>
+      </tr>
+    `;
+  });
+
+  bulkStudentsTableBody.innerHTML = html;
+  updateBulkSelectedCount();
+}
+
+window.toggleBulkStudent = function(studentId, checked){
+  if(checked){
+    bulkSelectedIds.add(studentId);
+  }
+  else{
+    bulkSelectedIds.delete(studentId);
+  }
+  updateBulkSelectedCount();
+};
+
+function updateBulkSelectedCount(){
+  bulkSelectedCount.innerText = bulkSelectedIds.size;
+}
+
+window.selectVisibleBulkStudents = function(){
+
+  const visible = getVisibleBulkStudents();
+
+  visible.forEach(item=>{
+    if(String(item.guardianPhone || "").trim()){
+      bulkSelectedIds.add(item.id);
+    }
+  });
+
+  renderBulkStudents();
+};
+
+window.clearBulkSelection = function(){
+  bulkSelectedIds.clear();
+  renderBulkStudents();
+};
+
+bulkTeacherFilter.addEventListener("change", function(){
+  updateBulkClassFilter(bulkClassFilter.value);
+  renderBulkStudents();
+});
+
+bulkClassFilter.addEventListener("change", renderBulkStudents);
+bulkStudentSearch.addEventListener("input", renderBulkStudents);
+
+window.startBulkSending = function(){
+
+  const message = bulkMessageText.value.trim();
+
+  if(bulkSelectedIds.size === 0){
+    alert("اختر طالبًا واحدًا على الأقل");
+    return;
+  }
+
+  if(!message){
+    alert("اكتب الرسالة أولًا");
+    return;
+  }
+
+  bulkQueue = bulkStudents.filter(item=>bulkSelectedIds.has(item.id));
+  bulkQueue = bulkQueue.filter(item=>String(item.guardianPhone || "").trim());
+
+  if(bulkQueue.length === 0){
+    alert("لا يوجد رقم ولي أمر صالح ضمن الطلاب المحددين");
+    return;
+  }
+
+  bulkQueueIndex = 0;
+  bulkActiveMessage = message;
+  bulkSendPanel.classList.remove("hidden");
+  renderBulkCurrentRecipient();
+  bulkSendPanel.scrollIntoView({behavior:"smooth", block:"center"});
+};
+
+function renderBulkCurrentRecipient(){
+
+  if(bulkQueue.length === 0){
+    bulkSendPanel.classList.add("hidden");
+    return;
+  }
+
+  if(bulkQueueIndex >= bulkQueue.length){
+    alert("تم الانتهاء من قائمة الإرسال");
+    cancelBulkSending();
+    return;
+  }
+
+  const item = bulkQueue[bulkQueueIndex];
+
+  bulkProgressText.innerText = `ولي الأمر ${bulkQueueIndex + 1} من ${bulkQueue.length}`;
+  bulkCurrentStudent.innerText = item.studentName || "-";
+  bulkCurrentClass.innerText = item.className || "-";
+  bulkCurrentTeacher.innerText = item.teacherName || "-";
+  bulkCurrentPhone.innerText = item.guardianPhone || "-";
+}
+
+window.sendCurrentBulkWhatsApp = async function(){
+
+  if(bulkQueueIndex >= bulkQueue.length){
+    return;
+  }
+
+  const item = bulkQueue[bulkQueueIndex];
+  const phone = cleanPhone(item.guardianPhone);
+
+  const personalizedMessage =
+`السلام عليكم ورحمة الله وبركاته
+
+ولي أمر الطالب: ${item.studentName}
+الفصل: ${item.className}
+
+${bulkActiveMessage}
+
+المشرف: ${supervisorName}`;
+
+  const whatsappWindow = window.open("", "_blank");
+
+  try{
+
+    await addDoc(
+      collection(db,"parentMessages"),
+      {
+        studentName:item.studentName,
+        className:item.className,
+        guardianPhone:phone,
+        teacherName:item.teacherName,
+        senderName:supervisorName,
+        senderRole:"supervisor",
+        subject:"لغة إنجليزية",
+        messageType:"رسالة جماعية",
+        messageText:personalizedMessage,
+        grades:[],
+        status:"تم الإرسال",
+        sentAt:serverTimestamp()
+      }
+    );
+
+  }
+  catch(error){
+    console.error(error);
+
+    if(whatsappWindow){
+      whatsappWindow.close();
+    }
+
+    alert("حدث خطأ أثناء حفظ سجل الرسالة");
+    return;
+  }
+
+  const url = `https://wa.me/${phone}?text=${encodeURIComponent(personalizedMessage)}`;
+
+  if(whatsappWindow){
+    whatsappWindow.location.href = url;
+  }
+  else{
+    window.location.href = url;
+  }
+};
+
+window.goToNextBulkRecipient = function(){
+
+  if(bulkQueue.length === 0){
+    return;
+  }
+
+  if(bulkQueueIndex < bulkQueue.length - 1){
+    bulkQueueIndex += 1;
+    renderBulkCurrentRecipient();
+  }
+  else{
+    alert("هذا آخر ولي أمر في القائمة");
+  }
+};
+
+window.cancelBulkSending = function(){
+  bulkQueue = [];
+  bulkQueueIndex = 0;
+  bulkActiveMessage = "";
+  bulkSendPanel.classList.add("hidden");
 };
 
 
