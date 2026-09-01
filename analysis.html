@@ -142,7 +142,7 @@ padding:12px;
 @media print{
 
 @page{
-size:A4 landscape;
+size:A4 portrait;
 margin:6mm;
 }
 
@@ -649,13 +649,6 @@ document.getElementById("examSelect");
    المتغيرات
 ======================================== */
 
-/*
-allExams = جميع الاختبارات في النظام.
-
-exams = الاختبارات المسموح بها
-للفصل المختار فقط.
-*/
-
 let allExams = [];
 let exams = [];
 
@@ -746,10 +739,6 @@ Number(
 data.order || 999
 ),
 
-/*
-الاختبارات القديمة تعتبر عامة.
-*/
-
 examScope:
 data.examScope || "all",
 
@@ -782,10 +771,6 @@ function filterExamsForClass(className){
 exams =
 allExams.filter(exam=>{
 
-/*
-اختبار عام.
-*/
-
 if(
 !exam.examScope ||
 exam.examScope === "all"
@@ -794,11 +779,6 @@ exam.examScope === "all"
 return true;
 
 }
-
-
-/*
-اختبار مخصص لفصول.
-*/
 
 if(
 exam.examScope === "selected"
@@ -815,11 +795,6 @@ className
 );
 
 }
-
-
-/*
-حماية للاختبارات القديمة.
-*/
 
 return true;
 
@@ -881,10 +856,6 @@ exams = [];
 return;
 
 }
-
-/*
-نحدد اختبارات الفصل فقط.
-*/
 
 filterExamsForClass(
 className
@@ -1051,8 +1022,6 @@ const examName =
 examSelect.value;
 
 
-/* التحقق */
-
 if(
 teacherName === "اختر المعلم"
 ){
@@ -1080,12 +1049,6 @@ return;
 
 }
 
-
-/*
-حماية إضافية:
-نتأكد أن الاختبار المختار
-مسموح به لهذا الفصل.
-*/
 
 const selectedExam =
 exams.find(
