@@ -758,9 +758,48 @@ placeholder="رقم ولي الأمر"
 
 <div
 class="input-group hidden"
-id="classGroup"
+id="gradeGroup"
 >
-<select id="classSelect"></select>
+<select id="gradeSelect">
+<option value="">اختر الصف</option>
+<option value="أول ابتدائي">أول ابتدائي</option>
+<option value="ثاني ابتدائي">ثاني ابتدائي</option>
+<option value="ثالث ابتدائي">ثالث ابتدائي</option>
+<option value="رابع ابتدائي">رابع ابتدائي</option>
+<option value="خامس ابتدائي">خامس ابتدائي</option>
+<option value="سادس ابتدائي">سادس ابتدائي</option>
+<option value="أول متوسط">أول متوسط</option>
+<option value="ثاني متوسط">ثاني متوسط</option>
+<option value="ثالث متوسط">ثالث متوسط</option>
+<option value="أول ثانوي">أول ثانوي</option>
+<option value="ثاني ثانوي">ثاني ثانوي</option>
+<option value="ثالث ثانوي">ثالث ثانوي</option>
+</select>
+</div>
+
+<div
+class="input-group hidden"
+id="sectionGroup"
+>
+<select id="sectionSelect">
+<option value="">اختر الشعبة</option>
+<option value="أ">أ</option>
+<option value="ب">ب</option>
+<option value="ج">ج</option>
+<option value="د">د</option>
+</select>
+</div>
+
+<div
+class="input-group hidden"
+id="generatedClassGroup"
+>
+<input
+type="text"
+id="generatedClassInput"
+placeholder="الفصل الناتج"
+readonly
+/>
 </div>
 
 <div
@@ -1097,6 +1136,92 @@ item.checked = false;
 };
 
 /* ================================
+   Student Class Helpers
+================================ */
+
+function normalizeStudentKey(value){
+
+return String(value || "")
+.trim()
+.replace(/\s+/g," ")
+.toLowerCase();
+
+}
+
+function parseClassName(className){
+
+const value =
+String(className || "")
+.trim()
+.replace(/\s+/g," ");
+
+const sections =
+["أ","ب","ج","د"];
+
+for(const sectionName of sections){
+
+if(value.endsWith(" " + sectionName)){
+
+return {
+gradeName:
+value.slice(
+0,
+-(sectionName.length + 1)
+).trim(),
+
+sectionName
+};
+
+}
+
+}
+
+return {
+gradeName:value,
+sectionName:""
+};
+
+}
+
+function updateGeneratedClassPreview(){
+
+const gradeName =
+document
+.getElementById("gradeSelect")
+.value
+.trim();
+
+const sectionName =
+document
+.getElementById("sectionSelect")
+.value
+.trim();
+
+document
+.getElementById("generatedClassInput")
+.value =
+[gradeName,sectionName]
+.filter(Boolean)
+.join(" ")
+.trim();
+
+}
+
+document
+.getElementById("gradeSelect")
+.addEventListener(
+"change",
+updateGeneratedClassPreview
+);
+
+document
+.getElementById("sectionSelect")
+.addEventListener(
+"change",
+updateGeneratedClassPreview
+);
+
+/* ================================
    Modal
 ================================ */
 
@@ -1159,7 +1284,15 @@ document
 .classList.add("hidden");
 
 document
-.getElementById("classGroup")
+.getElementById("gradeGroup")
+.classList.add("hidden");
+
+document
+.getElementById("sectionGroup")
+.classList.add("hidden");
+
+document
+.getElementById("generatedClassGroup")
 .classList.add("hidden");
 
 document
@@ -1249,23 +1382,41 @@ id
 "إضافة طالب";
 
 document
-.getElementById("classGroup")
+.getElementById("gradeGroup")
+.classList.remove("hidden");
+
+document
+.getElementById("sectionGroup")
+.classList.remove("hidden");
+
+document
+.getElementById("generatedClassGroup")
 .classList.remove("hidden");
 
 document
 .getElementById("phoneGroup")
 .classList.remove("hidden");
 
-await loadClassOptions();
-
-if(data.className){
+const parsedClass =
+parseClassName(
+data.className || ""
+);
 
 document
-.getElementById("classSelect")
+.getElementById("gradeSelect")
 .value =
-data.className;
+data.gradeName ||
+parsedClass.gradeName ||
+"";
 
-}
+document
+.getElementById("sectionSelect")
+.value =
+data.sectionName ||
+parsedClass.sectionName ||
+"";
+
+updateGeneratedClassPreview();
 
 }
 
@@ -1368,10 +1519,23 @@ document
 .value
 .trim();
 
-const className =
+const gradeName =
 document
-.getElementById("classSelect")
-.value;
+.getElementById("gradeSelect")
+.value
+.trim();
+
+const sectionName =
+document
+.getElementById("sectionSelect")
+.value
+.trim();
+
+const className =
+[gradeName,sectionName]
+.filter(Boolean)
+.join(" ")
+.trim();
 
 const maxDegree =
 document
@@ -1512,9 +1676,74 @@ if(
 currentType === "student"
 ){
 
+if(!gradeName){
+
+alert("اختر الصف");
+return;
+
+}
+
+if(!sectionName){
+
+alert("اختر الشعبة");
+return;
+
+}
+
+const classExists =
+cachedClasses.some(
+item =>
+normalizeStudentKey(item.name) ===
+normalizeStudentKey(className)
+);
+
+if(!classExists){
+
+alert(
+`الفصل "${className}" غير موجود في إدارة الفصول.\nأضف الفصل أولًا أو اختر صفًا وشعبة مطابقين للفصول الموجودة.`
+);
+
+return;
+
+}
+
+const duplicateSnapshot =
+await getDocs(
+collection(db,"students")
+);
+
+const duplicate =
+duplicateSnapshot.docs.find(item=>{
+
+if(editId && item.id === editId){
+return false;
+}
+
+const s = item.data();
+
+return (
+normalizeStudentKey(s.name) === normalizeStudentKey(name)
+&&
+normalizeStudentKey(s.className) === normalizeStudentKey(className)
+);
+
+});
+
+if(duplicate){
+
+alert(
+"هذا الطالب موجود بالفعل بنفس الاسم والفصل، ولن تتم إضافته مرة أخرى."
+);
+
+return;
+
+}
+
 const payload = {
 name,
 className,
+gradeName,
+sectionName,
 guardianPhone
 };
 
@@ -3504,197 +3733,357 @@ html;
 
 async function loadClassOptions(){
 
-const select =
-document
-.getElementById(
-"classSelect"
-);
+/*
+لم تعد الإضافة اليدوية تعتمد على قائمة فصل واحدة.
+يتم اختيار الصف والشعبة بشكل منفصل،
+ثم يتكوّن className تلقائيًا بنفس أسماء الفصول الحالية.
+*/
 
-select.innerHTML = "";
+if(cachedClasses.length === 0){
 
 const snapshot =
 await getDocs(
-collection(
-db,
-"classes"
-)
+collection(db,"classes")
 );
 
-const classes = [];
+cachedClasses = [];
 
-snapshot.forEach(
-item=>{
-classes.push(
-item.data()
-);
-}
-);
+snapshot.forEach(item=>{
 
-classes.sort(
-(a,b)=>
-(a.name || "")
-.localeCompare(
-b.name || "",
-"ar",
-{
-numeric:true,
-sensitivity:"base"
-}
-)
-);
+cachedClasses.push({
+id:item.id,
+...item.data()
+});
 
-classes.forEach(
-item=>{
-
-select.innerHTML += `
-<option value="${item.name}">
-${item.name}
-</option>
-`;
+});
 
 }
-);
 
 }
 
 /* ================================
-   Excel Import - Smart Import
-   A = اسم الطالب
-   B = الفصل
-   C = رقم ولي الأمر
+   Excel Import - School File Format
+
+   ملف المدرسة الحالي:
+   A = م
+   B = الاسم
+   C = الهوية
+   D = الجوال
+   E = الصف
+   F = الفصل / الشعبة
+   G = مجموعة الاعدادات
+
+   يتم تكوين className تلقائيًا:
+   الصف + الشعبة
+   مثال: أول ابتدائي + أ = أول ابتدائي أ
 ================================ */
 
-function normalizeStudentKey(value){
-return String(value || "")
-.trim()
-.replace(/\s+/g," ")
-.toLowerCase();
+document
+.getElementById("excelFile")
+.addEventListener("change",event=>{
+
+const file =
+event.target.files[0];
+
+if(!file){
+return;
 }
 
-document.getElementById("excelFile").addEventListener("change",event=>{
+const reader =
+new FileReader();
 
-const file=event.target.files[0];
-if(!file) return;
-
-const reader=new FileReader();
-
-reader.onload=async(e)=>{
+reader.onload =
+async(e)=>{
 
 try{
 
-const data=new Uint8Array(e.target.result);
-const workbook=XLSX.read(data,{type:"array"});
-const sheet=workbook.Sheets[workbook.SheetNames[0]];
-const rows=XLSX.utils.sheet_to_json(sheet,{
+const data =
+new Uint8Array(
+e.target.result
+);
+
+const workbook =
+XLSX.read(
+data,
+{
+type:"array"
+}
+);
+
+const sheet =
+workbook.Sheets[
+workbook.SheetNames[0]
+];
+
+const rows =
+XLSX.utils.sheet_to_json(
+sheet,
+{
 header:1,
 raw:false,
 defval:""
-});
+}
+);
 
-const importedStudents=[];
-const fileKeys=new Set();
+const importedStudents = [];
+const fileKeys = new Set();
 
-for(let i=1;i<rows.length;i++){
+for(
+let i = 1;
+i < rows.length;
+i++
+){
 
-const name=String(rows[i][0] || "").trim();
-const className=String(rows[i][1] || "").trim();
-const guardianPhone=String(rows[i][2] || "").trim();
+const name =
+String(
+rows[i][1] || ""
+).trim();
 
-if(!name || !className) continue;
+const guardianPhone =
+String(
+rows[i][3] || ""
+).trim();
 
-const key=
+const gradeName =
+String(
+rows[i][4] || ""
+).trim();
+
+const sectionName =
+String(
+rows[i][5] || ""
+).trim();
+
+if(!name || !gradeName || !sectionName){
+continue;
+}
+
+const className =
+[gradeName,sectionName]
+.filter(Boolean)
+.join(" ")
+.trim();
+
+const key =
 normalizeStudentKey(name)
-+"|||"+
++
+"|||"
++
 normalizeStudentKey(className);
 
-/* منع تكرار الطالب داخل ملف Excel نفسه */
-if(fileKeys.has(key)) continue;
+/* منع التكرار داخل ملف Excel نفسه */
+if(fileKeys.has(key)){
+continue;
+}
 
 fileKeys.add(key);
 
 importedStudents.push({
 name,
-className,
 guardianPhone,
+gradeName,
+sectionName,
+className,
 key
 });
 
 }
 
-if(importedStudents.length===0){
-alert("لم يتم العثور على بيانات طلاب صحيحة في الملف");
-event.target.value="";
+if(
+importedStudents.length === 0
+){
+
+alert(
+"لم يتم العثور على بيانات طلاب صحيحة في الملف"
+);
+
+event.target.value = "";
+
 return;
+
+}
+
+/* التأكد من أن الفصول الناتجة موجودة في إدارة الفصول */
+const classesSnapshot =
+await getDocs(
+collection(db,"classes")
+);
+
+const validClassNames =
+new Set();
+
+classesSnapshot.forEach(item=>{
+
+validClassNames.add(
+normalizeStudentKey(
+item.data().name
+)
+);
+
+});
+
+const invalidClasses =
+[
+...new Set(
+importedStudents
+.filter(student=>
+!validClassNames.has(
+normalizeStudentKey(
+student.className
+)
+)
+)
+.map(student=>student.className)
+)
+];
+
+if(invalidClasses.length > 0){
+
+alert(
+`يوجد في ملف Excel فصول غير موجودة في إدارة الفصول:
+
+${invalidClasses.join("\\n")}
+
+أضف هذه الفصول أولًا في قسم "الفصول"، ثم أعد الاستيراد.
+
+لم يتم استيراد أي طالب حتى لا يحدث عدم تطابق.`
+);
+
+event.target.value = "";
+
+return;
+
 }
 
 /* تحميل الطلاب الموجودين حاليًا */
-const existingSnapshot=
-await getDocs(collection(db,"students"));
+const existingSnapshot =
+await getDocs(
+collection(
+db,
+"students"
+)
+);
 
-const existingMap=new Map();
+const existingMap =
+new Map();
 
 existingSnapshot.forEach(item=>{
 
-const student=item.data();
+const student =
+item.data();
 
-const key=
-normalizeStudentKey(student.name)
-+"|||"+
-normalizeStudentKey(student.className);
+const key =
+normalizeStudentKey(
+student.name
+)
++
+"|||"
++
+normalizeStudentKey(
+student.className
+);
 
 if(!existingMap.has(key)){
-existingMap.set(key,{
+
+existingMap.set(
+key,
+{
 id:item.id,
 ...student
-});
+}
+);
+
 }
 
 });
 
-let addedCount=0;
-let updatedCount=0;
-let unchangedCount=0;
+let addedCount = 0;
+let updatedCount = 0;
+let unchangedCount = 0;
 
-const operations=[];
+const operations = [];
 
-for(const student of importedStudents){
+for(
+const student
+of
+importedStudents
+){
 
-const existing=existingMap.get(student.key);
+const existing =
+existingMap.get(
+student.key
+);
 
 if(existing){
 
-const oldPhone=String(existing.guardianPhone || "").trim();
-const newPhone=String(student.guardianPhone || "").trim();
+const payload = {};
+
+const oldPhone =
+String(
+existing.guardianPhone || ""
+).trim();
+
+const newPhone =
+String(
+student.guardianPhone || ""
+).trim();
+
+if(oldPhone !== newPhone){
+payload.guardianPhone = newPhone;
+}
 
 /*
-الطالب موجود بالفعل بنفس الاسم والفصل:
-لا تتم إضافته مرة أخرى.
-يتم تحديث رقم ولي الأمر فقط إذا تغير.
+نضيف الصف والشعبة للطالب القديم أيضًا
+حتى تصبح البيانات موحدة مع الملف الجديد.
 */
-if(oldPhone!==newPhone){
+if(
+existing.gradeName !== student.gradeName
+){
+payload.gradeName = student.gradeName;
+}
+
+if(
+existing.sectionName !== student.sectionName
+){
+payload.sectionName = student.sectionName;
+}
+
+if(
+Object.keys(payload).length > 0
+){
 
 operations.push(
 ()=>updateDoc(
-doc(db,"students",existing.id),
-{guardianPhone:newPhone}
+doc(
+db,
+"students",
+existing.id
+),
+payload
 )
 );
 
 updatedCount++;
 
 }else{
+
 unchangedCount++;
+
 }
 
 }else{
 
-/* طالب جديد */
 operations.push(
 ()=>addDoc(
-collection(db,"students"),
+collection(
+db,
+"students"
+),
 {
 name:student.name,
 className:student.className,
+gradeName:student.gradeName,
+sectionName:student.sectionName,
 guardianPhone:student.guardianPhone
 }
 )
@@ -3706,43 +4095,60 @@ addedCount++;
 
 }
 
-/* تنفيذ العمليات على دفعات */
-const batchSize=25;
+/* تنفيذ على دفعات */
+const batchSize = 25;
 
-for(let i=0;i<operations.length;i+=batchSize){
+for(
+let i = 0;
+i < operations.length;
+i += batchSize
+){
 
-const currentBatch=operations.slice(i,i+batchSize);
+const currentBatch =
+operations.slice(
+i,
+i + batchSize
+);
 
 await Promise.all(
-currentBatch.map(operation=>operation())
+currentBatch.map(
+operation=>operation()
+)
 );
 
 }
 
 alert(
-`تم تحديث بيانات الطلاب بنجاح
+`تم استيراد ملف المدرسة بنجاح
 
-طلاب جدد تمت إضافتهم: ${addedCount}
-طلاب تم تحديث رقم ولي الأمر لهم: ${updatedCount}
+طلاب جدد: ${addedCount}
+طلاب تم تحديث بياناتهم: ${updatedCount}
 طلاب موجودون بدون تغيير: ${unchangedCount}
 
 لم يتم حذف أو تعديل أي درجات.`
 );
 
 await loadStudents();
-event.target.value="";
+
+event.target.value = "";
 
 }catch(error){
 
 console.error(error);
-alert("حدث خطأ أثناء استيراد ملف Excel");
-event.target.value="";
+
+alert(
+"حدث خطأ أثناء استيراد ملف Excel"
+);
+
+event.target.value = "";
 
 }
 
 };
 
-reader.readAsArrayBuffer(file);
+reader.readAsArrayBuffer(
+file
+);
 
 });
 
