@@ -3558,163 +3558,193 @@ ${item.name}
 }
 
 /* ================================
-   Excel Import
+   Excel Import - Smart Import
+   A = اسم الطالب
+   B = الفصل
+   C = رقم ولي الأمر
 ================================ */
 
-document
-.getElementById(
-"excelFile"
-)
-.addEventListener(
-"change",
-event=>{
-
-const file =
-event.target.files[0];
-
-if(!file){
-return;
+function normalizeStudentKey(value){
+return String(value || "")
+.trim()
+.replace(/\s+/g," ")
+.toLowerCase();
 }
 
-const reader =
-new FileReader();
+document.getElementById("excelFile").addEventListener("change",event=>{
 
-reader.onload =
-async(e)=>{
+const file=event.target.files[0];
+if(!file) return;
+
+const reader=new FileReader();
+
+reader.onload=async(e)=>{
 
 try{
 
-const data =
-new Uint8Array(
-e.target.result
-);
-
-const workbook =
-XLSX.read(
-data,
-{
-type:"array"
-}
-);
-
-const sheet =
-workbook.Sheets[
-workbook.SheetNames[0]
-];
-
-const rows =
-XLSX.utils.sheet_to_json(
-sheet,
-{
+const data=new Uint8Array(e.target.result);
+const workbook=XLSX.read(data,{type:"array"});
+const sheet=workbook.Sheets[workbook.SheetNames[0]];
+const rows=XLSX.utils.sheet_to_json(sheet,{
 header:1,
-raw:false
-}
-);
+raw:false,
+defval:""
+});
 
-const studentsToAdd =
-[];
+const importedStudents=[];
+const fileKeys=new Set();
 
-for(
-let i = 1;
-i < rows.length;
-i++
-){
+for(let i=1;i<rows.length;i++){
 
-if(
-!rows[i][0]
-){
-continue;
-}
+const name=String(rows[i][0] || "").trim();
+const className=String(rows[i][1] || "").trim();
+const guardianPhone=String(rows[i][2] || "").trim();
 
-studentsToAdd.push({
-name:
-String(
-rows[i][0] || ""
-).trim(),
+if(!name || !className) continue;
 
-className:
-String(
-rows[i][1] || ""
-).trim(),
+const key=
+normalizeStudentKey(name)
++"|||"+
+normalizeStudentKey(className);
 
-guardianPhone:
-String(
-rows[i][2] || ""
-).trim()
+/* منع تكرار الطالب داخل ملف Excel نفسه */
+if(fileKeys.has(key)) continue;
+
+fileKeys.add(key);
+
+importedStudents.push({
+name,
+className,
+guardianPhone,
+key
 });
 
 }
 
-if(
-studentsToAdd.length === 0
-){
+if(importedStudents.length===0){
+alert("لم يتم العثور على بيانات طلاب صحيحة في الملف");
+event.target.value="";
+return;
+}
 
-alert(
-"لم يتم العثور على بيانات طلاب في الملف"
+/* تحميل الطلاب الموجودين حاليًا */
+const existingSnapshot=
+await getDocs(collection(db,"students"));
+
+const existingMap=new Map();
+
+existingSnapshot.forEach(item=>{
+
+const student=item.data();
+
+const key=
+normalizeStudentKey(student.name)
++"|||"+
+normalizeStudentKey(student.className);
+
+if(!existingMap.has(key)){
+existingMap.set(key,{
+id:item.id,
+...student
+});
+}
+
+});
+
+let addedCount=0;
+let updatedCount=0;
+let unchangedCount=0;
+
+const operations=[];
+
+for(const student of importedStudents){
+
+const existing=existingMap.get(student.key);
+
+if(existing){
+
+const oldPhone=String(existing.guardianPhone || "").trim();
+const newPhone=String(student.guardianPhone || "").trim();
+
+/*
+الطالب موجود بالفعل بنفس الاسم والفصل:
+لا تتم إضافته مرة أخرى.
+يتم تحديث رقم ولي الأمر فقط إذا تغير.
+*/
+if(oldPhone!==newPhone){
+
+operations.push(
+()=>updateDoc(
+doc(db,"students",existing.id),
+{guardianPhone:newPhone}
+)
 );
 
-return;
+updatedCount++;
+
+}else{
+unchangedCount++;
+}
+
+}else{
+
+/* طالب جديد */
+operations.push(
+()=>addDoc(
+collection(db,"students"),
+{
+name:student.name,
+className:student.className,
+guardianPhone:student.guardianPhone
+}
+)
+);
+
+addedCount++;
 
 }
 
-const batchSize =
-25;
+}
 
-for(
-let i = 0;
-i < studentsToAdd.length;
-i += batchSize
-){
+/* تنفيذ العمليات على دفعات */
+const batchSize=25;
 
-const currentBatch =
-studentsToAdd.slice(
-i,
-i + batchSize
-);
+for(let i=0;i<operations.length;i+=batchSize){
+
+const currentBatch=operations.slice(i,i+batchSize);
 
 await Promise.all(
-
-currentBatch.map(
-student=>
-addDoc(
-collection(
-db,
-"students"
-),
-student
-)
-)
-
+currentBatch.map(operation=>operation())
 );
 
 }
 
 alert(
-`تم استيراد ${studentsToAdd.length} طالب مع أرقام أولياء الأمور`
+`تم تحديث بيانات الطلاب بنجاح
+
+طلاب جدد تمت إضافتهم: ${addedCount}
+طلاب تم تحديث رقم ولي الأمر لهم: ${updatedCount}
+طلاب موجودون بدون تغيير: ${unchangedCount}
+
+لم يتم حذف أو تعديل أي درجات.`
 );
 
 await loadStudents();
-
-event.target.value = "";
+event.target.value="";
 
 }catch(error){
 
 console.error(error);
-
-alert(
-"حدث خطأ أثناء استيراد ملف Excel"
-);
+alert("حدث خطأ أثناء استيراد ملف Excel");
+event.target.value="";
 
 }
 
 };
 
-reader.readAsArrayBuffer(
-file
-);
+reader.readAsArrayBuffer(file);
 
-}
-);
+});
 
 /* ================================
    Logout
