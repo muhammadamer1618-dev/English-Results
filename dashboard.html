@@ -278,6 +278,87 @@ font-weight:900;
 color:#cbd5e1;
 }
 
+
+/* ================================
+   إصلاح مرونة نافذة الإضافة/التعديل
+   حتى تظهر كاملة ويمكن النزول داخلها
+================================ */
+
+.modal{
+overflow-y:auto !important;
+align-items:flex-start !important;
+padding:18px 10px !important;
+}
+
+.modal-content{
+width:min(92vw,620px) !important;
+max-height:calc(100vh - 36px) !important;
+overflow-y:auto !important;
+overflow-x:hidden !important;
+margin:auto !important;
+scrollbar-width:thin;
+scrollbar-color:#facc15 #111827;
+}
+
+.modal-content::-webkit-scrollbar{
+width:8px;
+}
+
+.modal-content::-webkit-scrollbar-track{
+background:#111827;
+border-radius:20px;
+}
+
+.modal-content::-webkit-scrollbar-thumb{
+background:#facc15;
+border-radius:20px;
+}
+
+.modal-actions{
+position:sticky !important;
+bottom:0 !important;
+z-index:20 !important;
+background:#111827 !important;
+padding-top:12px !important;
+padding-bottom:4px !important;
+margin-top:14px !important;
+}
+
+.exam-classes-box{
+max-height:220px !important;
+overflow-y:auto !important;
+}
+
+@media(max-height:750px){
+
+.modal{
+padding:8px !important;
+}
+
+.modal-content{
+max-height:calc(100vh - 16px) !important;
+}
+
+.exam-classes-box{
+max-height:170px !important;
+}
+
+}
+
+@media(max-width:700px){
+
+.modal{
+padding:8px !important;
+}
+
+.modal-content{
+width:100% !important;
+max-height:calc(100vh - 16px) !important;
+border-radius:16px !important;
+}
+
+}
+
 </style>
 </head>
 
