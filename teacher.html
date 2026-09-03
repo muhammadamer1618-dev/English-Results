@@ -90,6 +90,103 @@
   text-align:right;
   color:#e2e8f0;
 }
+
+/* ================================
+   ملء الشاشة + الحضور والغياب
+================================ */
+.dashboard-layout{
+  width:100% !important;
+  max-width:100vw !important;
+  overflow-x:hidden !important;
+}
+.main{
+  min-width:0 !important;
+  width:auto !important;
+  max-width:100% !important;
+  overflow-x:hidden !important;
+  padding:20px !important;
+}
+.section{
+  width:100% !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+  overflow-x:hidden !important;
+}
+.grades-table-wrap{
+  width:100%;
+  overflow-x:auto;
+}
+#gradesSection table{
+  width:100% !important;
+  table-layout:auto !important;
+  font-size:13px;
+}
+#gradesSection th,
+#gradesSection td{
+  padding:9px 6px !important;
+  white-space:normal !important;
+}
+#gradesSection .student-name{
+  min-width:190px;
+  max-width:260px;
+}
+.grade-input{
+  width:70px !important;
+}
+.attendance-toolbar{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+  margin:0 0 16px;
+}
+.attendance-btn{
+  border:none;
+  border-radius:12px;
+  padding:10px 16px;
+  cursor:pointer;
+  font-family:'Cairo',sans-serif;
+  font-weight:900;
+  color:white;
+}
+.all-present-btn{background:#16a34a;}
+.all-absent-btn{background:#dc2626;}
+.attendance-select{
+  min-width:92px;
+  padding:7px 8px;
+  border-radius:10px;
+  border:1px solid #334155;
+  background:#020617;
+  color:white;
+  font-family:'Cairo',sans-serif;
+  font-weight:800;
+}
+.curriculum-note{
+  display:inline-block;
+  padding:6px 10px;
+  border-radius:12px;
+  font-size:12px;
+  font-weight:900;
+  margin-top:5px;
+}
+.curriculum-basic{
+  background:rgba(34,197,94,.12);
+  color:#22c55e;
+  border:1px solid rgba(34,197,94,.35);
+}
+.curriculum-additional{
+  background:rgba(59,130,246,.12);
+  color:#60a5fa;
+  border:1px solid rgba(59,130,246,.35);
+}
+@media(max-width:1100px){
+  .main{padding:14px !important;}
+  #gradesSection table{font-size:12px;}
+  #gradesSection th,#gradesSection td{padding:7px 4px !important;}
+  #gradesSection .student-name{min-width:160px;}
+  .grade-input{width:60px !important;}
+}
+
 </style>
 </head>
 
@@ -152,7 +249,19 @@
 
   </div>
 
-  <div style="overflow:auto;">
+  <div class="attendance-toolbar" id="attendanceToolbar" style="display:none;">
+    <button class="attendance-btn all-present-btn" onclick="setAllAttendance('present')">
+      الكل حاضر
+    </button>
+    <button class="attendance-btn all-absent-btn" onclick="setAllAttendance('absent')">
+      الكل غائب
+    </button>
+    <span style="color:#94a3b8;font-weight:800;">
+      يمكنك تعديل حالة أي طالب بشكل منفرد.
+    </span>
+  </div>
+
+  <div class="grades-table-wrap">
     <table>
       <thead id="tableHead"></thead>
       <tbody id="tableBody"></tbody>
@@ -323,6 +432,8 @@ let exams = [];
 let allGrades = [];
 let currentStudents = [];
 let teacherMessages = [];
+let teacherAssignments = [];
+let currentCurriculumTypes = [];
 
 
 window.showSection = function(id){
@@ -363,21 +474,28 @@ async function loadTeacherClasses(){
       )
     );
 
-  const classes = [];
+  teacherAssignments = [];
 
   snapshot.forEach(item=>{
 
-    const className =
-      item.data().className;
+    const data = item.data();
 
-    if(
-      className &&
-      !classes.includes(className)
-    ){
-      classes.push(className);
-    }
+    teacherAssignments.push({
+      id:item.id,
+      teacherName:data.teacherName,
+      className:data.className,
+      curriculumType:data.curriculumType || "basic"
+    });
 
   });
+
+  const classes = [
+    ...new Set(
+      teacherAssignments
+      .map(item=>item.className)
+      .filter(Boolean)
+    )
+  ];
 
   classes.sort((a,b)=>
     a.localeCompare(
@@ -392,9 +510,23 @@ async function loadTeacherClasses(){
 
   classes.forEach(className=>{
 
+    const types = [
+      ...new Set(
+        teacherAssignments
+        .filter(item=>item.className === className)
+        .map(item=>item.curriculumType || "basic")
+      )
+    ];
+
+    const labels = types.map(type=>
+      type === "additional"
+      ? "إضافي"
+      : "أساسي"
+    );
+
     classSelect.innerHTML += `
       <option value="${className}">
-        ${className}
+        ${className} - ${labels.join(" + ")}
       </option>
     `;
 
@@ -437,7 +569,10 @@ async function loadAllExams(){
         ?
         data.assignedClasses
         :
-        []
+        [],
+
+      curriculumType:
+        data.curriculumType || "basic"
 
     });
 
@@ -452,8 +587,32 @@ async function loadAllExams(){
 
 function filterExamsForClass(className){
 
+  currentCurriculumTypes = [
+    ...new Set(
+      teacherAssignments
+      .filter(item=>item.className === className)
+      .map(item=>item.curriculumType || "basic")
+    )
+  ];
+
   exams =
     allExams.filter(exam=>{
+
+      const examCurriculum =
+        exam.curriculumType || "basic";
+
+      /*
+      أهم فلتر:
+      لا يظهر الاختبار إلا إذا كان المعلم مسندًا له
+      نفس نوع المنهج في هذا الفصل.
+      */
+      if(
+        !currentCurriculumTypes.includes(
+          examCurriculum
+        )
+      ){
+        return false;
+      }
 
       if(
         !exam.examScope ||
@@ -465,16 +624,14 @@ function filterExamsForClass(className){
       if(
         exam.examScope === "selected"
       ){
-
         return (
           Array.isArray(exam.assignedClasses)
           &&
           exam.assignedClasses.includes(className)
         );
-
       }
 
-      return true;
+      return false;
 
     });
 
@@ -534,13 +691,18 @@ async function loadStudentsTable(){
   tableHead.innerHTML = "";
   tableBody.innerHTML = "";
 
+  const attendanceToolbar =
+    document.getElementById("attendanceToolbar");
+
+  attendanceToolbar.style.display = "none";
+
   const className =
     classSelect.value;
 
   if(className === "اختر الفصل"){
 
     exams = [];
-
+    currentCurriculumTypes = [];
     updateClearExamSelect();
 
     return;
@@ -552,7 +714,7 @@ async function loadStudentsTable(){
 
   tableBody.innerHTML = `
     <tr class="loading-row">
-      <td colspan="50">
+      <td colspan="100">
         جاري تحميل الطلاب...
       </td>
     </tr>
@@ -564,8 +726,8 @@ async function loadStudentsTable(){
 
     tableBody.innerHTML = `
       <tr>
-        <td colspan="50">
-          لا توجد اختبارات مسندة لهذا الفصل
+        <td colspan="100">
+          لا توجد اختبارات مطابقة لنوع المنهج المسند لك في هذا الفصل
         </td>
       </tr>
     `;
@@ -573,6 +735,7 @@ async function loadStudentsTable(){
     return;
   }
 
+  attendanceToolbar.style.display = "flex";
 
   let head = `
     <tr>
@@ -581,11 +744,31 @@ async function loadStudentsTable(){
 
   exams.forEach(exam=>{
 
+    const curriculumLabel =
+      exam.curriculumType === "additional"
+      ? "المنهج الإضافي"
+      : "المنهج الأساسي";
+
+    const curriculumClass =
+      exam.curriculumType === "additional"
+      ? "curriculum-additional"
+      : "curriculum-basic";
+
     head += `
       <th>
         ${exam.examName}
         <br>
         من ${exam.maxDegree}
+        <br>
+        <span class="curriculum-note ${curriculumClass}">
+          ${curriculumLabel}
+        </span>
+      </th>
+
+      <th>
+        حضور
+        <br>
+        ${exam.examName}
       </th>
     `;
 
@@ -611,9 +794,10 @@ async function loadStudentsTable(){
 
   studentsSnapshot.forEach(studentDoc=>{
 
-    currentStudents.push(
-      studentDoc.data()
-    );
+    currentStudents.push({
+      id:studentDoc.id,
+      ...studentDoc.data()
+    });
 
   });
 
@@ -654,12 +838,22 @@ async function loadStudentsTable(){
 
         );
 
+      const currentAttendance =
+        existingGrade?.attendance ||
+        "present";
+
       const currentGrade =
-        existingGrade
+        existingGrade &&
+        currentAttendance !== "absent"
         ?
         existingGrade.grade
         :
         "";
+
+      const disabled =
+        currentAttendance === "absent"
+        ? "disabled"
+        : "";
 
       html += `
         <td>
@@ -671,13 +865,16 @@ async function loadStudentsTable(){
             max="${exam.maxDegree}"
 
             data-student="${student.name}"
+            data-student-id="${student.id}"
             data-exam="${exam.examName}"
             data-max="${exam.maxDegree}"
+            data-curriculum="${exam.curriculumType || "basic"}"
 
             class="grade-input"
 
+            ${disabled}
+
             style="
-              width:85px;
               padding:8px;
               border:none;
               border-radius:10px;
@@ -686,6 +883,24 @@ async function loadStudentsTable(){
               text-align:center;
             "
           />
+
+        </td>
+
+        <td>
+
+          <select
+            class="attendance-select"
+            data-student="${student.name}"
+            data-exam="${exam.examName}"
+            onchange="attendanceChanged(this)"
+          >
+            <option value="present" ${currentAttendance === "present" ? "selected" : ""}>
+              حاضر
+            </option>
+            <option value="absent" ${currentAttendance === "absent" ? "selected" : ""}>
+              غائب
+            </option>
+          </select>
 
         </td>
       `;
@@ -720,6 +935,53 @@ async function loadStudentsTable(){
   tableBody.innerHTML = html;
 
 }
+
+
+window.attendanceChanged =
+function(select){
+
+  const studentName =
+    select.dataset.student;
+
+  const examName =
+    select.dataset.exam;
+
+  const gradeInput =
+    document.querySelector(
+      `.grade-input[data-student="${CSS.escape(studentName)}"][data-exam="${CSS.escape(examName)}"]`
+    );
+
+  if(!gradeInput){
+    return;
+  }
+
+  if(select.value === "absent"){
+
+    gradeInput.value = "";
+    gradeInput.disabled = true;
+
+  }else{
+
+    gradeInput.disabled = false;
+
+  }
+
+};
+
+
+window.setAllAttendance =
+function(status){
+
+  document
+    .querySelectorAll(".attendance-select")
+    .forEach(select=>{
+
+      select.value = status;
+      window.attendanceChanged(select);
+
+    });
+
+};
 
 
 function cleanPhone(phone){
@@ -794,26 +1056,45 @@ async function(encodedStudentName){
 
       );
 
-    if(
-      gradeData &&
-      gradeData.grade !== ""
-    ){
+    if(gradeData){
 
-      studentGrades.push(
-        `${exam.examName}: ${gradeData.grade} / ${exam.maxDegree}`
-      );
+      const attendance =
+        gradeData.attendance ||
+        "present";
 
-      gradesForArchive.push({
+      if(attendance === "absent"){
 
-        examName:exam.examName,
+        studentGrades.push(
+          `${exam.examName}: غائب`
+        );
 
-        grade:
-          Number(gradeData.grade),
+        gradesForArchive.push({
+          examName:exam.examName,
+          grade:null,
+          maxDegree:Number(exam.maxDegree),
+          attendance:"absent",
+          curriculumType:exam.curriculumType || "basic"
+        });
 
-        maxDegree:
-          Number(exam.maxDegree)
+      }else if(
+        gradeData.grade !== ""
+        &&
+        gradeData.grade !== undefined
+      ){
 
-      });
+        studentGrades.push(
+          `${exam.examName}: ${gradeData.grade} / ${exam.maxDegree} - حاضر`
+        );
+
+        gradesForArchive.push({
+          examName:exam.examName,
+          grade:Number(gradeData.grade),
+          maxDegree:Number(exam.maxDegree),
+          attendance:"present",
+          curriculumType:exam.curriculumType || "basic"
+        });
+
+      }
 
     }
 
@@ -823,7 +1104,7 @@ async function(encodedStudentName){
   if(studentGrades.length === 0){
 
     alert(
-      "لا توجد درجات مرصودة لهذا الطالب"
+      "لا توجد درجات أو حالات حضور محفوظة لهذا الطالب"
     );
 
     return;
@@ -1573,17 +1854,18 @@ async function(){
     return;
   }
 
-
   const inputs =
     document.querySelectorAll(
       ".grade-input"
     );
 
-
   for(const input of inputs){
 
     const studentName =
       input.dataset.student;
+
+    const studentId =
+      input.dataset.studentId || "";
 
     const examName =
       input.dataset.exam;
@@ -1591,35 +1873,30 @@ async function(){
     const maxDegree =
       Number(input.dataset.max);
 
+    const curriculumType =
+      input.dataset.curriculum ||
+      "basic";
+
+    const attendanceSelect =
+      document.querySelector(
+        `.attendance-select[data-student="${CSS.escape(studentName)}"][data-exam="${CSS.escape(examName)}"]`
+      );
+
+    const attendance =
+      attendanceSelect
+      ?
+      attendanceSelect.value
+      :
+      "present";
+
     const value =
       input.value.trim();
 
-    if(value === ""){
-      continue;
-    }
-
-    const grade =
-      Number(value);
-
-    if(grade < 0){
-
-      alert(
-        `${studentName} لديه درجة سالبة في ${examName}`
-      );
-
-      return;
-    }
-
-    if(grade > maxDegree){
-
-      alert(
-        `${studentName} درجته أكبر من الدرجة النهائية في ${examName}`
-      );
-
-      return;
-    }
-
-
+    /*
+    الطالب الحاضر بدون درجة:
+    لا ننشئ سجلًا جديدًا إلا إذا كان له سجل قديم.
+    أما الغائب فيُحفظ حتى بدون درجة.
+    */
     const existing =
       allGrades.find(item=>
 
@@ -1633,6 +1910,69 @@ async function(){
 
       );
 
+    if(
+      attendance === "present"
+      &&
+      value === ""
+      &&
+      !existing
+    ){
+      continue;
+    }
+
+    let grade = null;
+
+    if(attendance === "present"){
+
+      if(value === ""){
+
+        /*
+        لو كان الطالب غائبًا سابقًا ثم أصبح حاضرًا
+        ولم تدخل له درجة بعد، نحفظ الحضور بدون درجة.
+        */
+        grade = "";
+
+      }else{
+
+        grade = Number(value);
+
+        if(grade < 0){
+
+          alert(
+            `${studentName} لديه درجة سالبة في ${examName}`
+          );
+
+          return;
+        }
+
+        if(grade > maxDegree){
+
+          alert(
+            `${studentName} درجته أكبر من الدرجة النهائية في ${examName}`
+          );
+
+          return;
+        }
+
+      }
+
+    }
+
+    const payload = {
+      teacherName,
+      studentName,
+      studentId,
+      className,
+      subject:"لغة إنجليزية",
+      examName,
+      grade:
+        attendance === "absent"
+        ? ""
+        : grade,
+      maxDegree,
+      attendance,
+      curriculumType
+    };
 
     if(existing){
 
@@ -1642,35 +1982,22 @@ async function(){
           "grades",
           existing.id
         ),
-        {
-          grade,
-          maxDegree
-        }
+        payload
       );
 
-    }
-    else{
+    }else{
 
       await addDoc(
         collection(db,"grades"),
-        {
-          teacherName,
-          studentName,
-          className,
-          subject:"لغة إنجليزية",
-          examName,
-          grade,
-          maxDegree
-        }
+        payload
       );
 
     }
 
   }
 
-
   alert(
-    "تم حفظ جميع الدرجات"
+    "تم حفظ الدرجات والحضور والغياب"
   );
 
   await loadStudentsTable();
