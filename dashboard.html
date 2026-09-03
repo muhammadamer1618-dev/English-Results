@@ -243,6 +243,41 @@ grid-template-columns:1fr;
 
 }
 
+
+.curriculum-select-box{
+max-width:450px;
+margin-bottom:18px;
+}
+
+.curriculum-badge{
+display:inline-block;
+padding:5px 10px;
+border-radius:14px;
+font-size:12px;
+font-weight:900;
+margin-inline-start:6px;
+}
+
+.curriculum-basic{
+background:rgba(34,197,94,.12);
+color:#22c55e;
+border:1px solid rgba(34,197,94,.35);
+}
+
+.curriculum-additional{
+background:rgba(59,130,246,.12);
+color:#60a5fa;
+border:1px solid rgba(59,130,246,.35);
+}
+
+.assignment-curriculum-title{
+margin-top:12px;
+margin-bottom:8px;
+font-size:13px;
+font-weight:900;
+color:#cbd5e1;
+}
+
 </style>
 </head>
 
@@ -579,6 +614,15 @@ onclick="deleteAllAssignments()"
 
 </div>
 
+<div class="input-group curriculum-select-box">
+
+<select id="bulkCurriculumSelect">
+<option value="basic">المنهج الأساسي</option>
+<option value="additional">المنهج الإضافي</option>
+</select>
+
+</div>
+
 <div id="classesCheckboxArea">
 
 <div class="empty-assignment">
@@ -651,6 +695,7 @@ onclick="openModal('exam')"
 <th>الترتيب</th>
 <th>الاختبار</th>
 <th>الدرجة النهائية</th>
+<th>المنهج</th>
 <th>نطاق الاختبار</th>
 <th>الإجراءات</th>
 </tr>
@@ -813,6 +858,24 @@ placeholder="الدرجة النهائية"
 />
 </div>
 
+<!-- نوع منهج الاختبار -->
+
+<div
+class="hidden"
+id="examCurriculumGroup"
+>
+<div class="exam-scope-box">
+<div style="font-weight:900;color:#facc15;margin-bottom:10px;">
+نوع المنهج
+</div>
+
+<select id="examCurriculumSelect">
+<option value="basic">المنهج الأساسي</option>
+<option value="additional">المنهج الإضافي</option>
+</select>
+</div>
+</div>
+
 <!-- نطاق الاختبار -->
 
 <div
@@ -951,6 +1014,9 @@ document.getElementById("modal");
 
 const bulkTeacherSelect =
 document.getElementById("bulkTeacherSelect");
+
+const bulkCurriculumSelect =
+document.getElementById("bulkCurriculumSelect");
 
 const classesCheckboxArea =
 document.getElementById("classesCheckboxArea");
@@ -1300,6 +1366,10 @@ document
 .classList.add("hidden");
 
 document
+.getElementById("examCurriculumGroup")
+.classList.add("hidden");
+
+document
 .getElementById("examScopeGroup")
 .classList.add("hidden");
 
@@ -1438,12 +1508,24 @@ document
 .classList.remove("hidden");
 
 document
+.getElementById("examCurriculumGroup")
+.classList.remove("hidden");
+
+document
 .getElementById("examScopeGroup")
 .classList.remove("hidden");
+
+document
+.getElementById("examCurriculumSelect")
+.value =
+data.curriculumType ||
+"basic";
 
 /*
 الاختبارات القديمة التي لا تحتوي examScope
 ستُعتبر اختبارات عامة حتى لا تتعطل.
+والاختبارات القديمة التي لا تحتوي curriculumType
+ستُعتبر من المنهج الأساسي.
 */
 
 const savedScope =
@@ -1542,6 +1624,12 @@ document
 .getElementById("degreeInput")
 .value
 .trim();
+
+const examCurriculumType =
+document
+.getElementById("examCurriculumSelect")
+.value ||
+"basic";
 
 if(!name){
 
@@ -1853,6 +1941,9 @@ examName:name,
 
 maxDegree:
 Number(maxDegree),
+
+curriculumType:
+examCurriculumType,
 
 examScope,
 
@@ -2959,10 +3050,19 @@ bulkTeacherSelect.addEventListener(
 renderClassCheckboxes
 );
 
+bulkCurriculumSelect.addEventListener(
+"change",
+renderClassCheckboxes
+);
+
 function renderClassCheckboxes(){
 
 const teacherName =
 bulkTeacherSelect.value;
+
+const curriculumType =
+bulkCurriculumSelect.value ||
+"basic";
 
 if(!teacherName){
 
@@ -2994,6 +3094,11 @@ const teacherAssignments =
 cachedAssignments.filter(
 item=>
 item.teacherName === teacherName
+&&
+(
+item.curriculumType ||
+"basic"
+) === curriculumType
 );
 
 const assignedNames =
@@ -3013,6 +3118,10 @@ margin-bottom:10px;
 <strong style="color:#facc15;">
 ${teacherName}
 </strong>
+<br>
+<span class="curriculum-badge ${curriculumType === "additional" ? "curriculum-additional" : "curriculum-basic"}">
+${curriculumType === "additional" ? "المنهج الإضافي" : "المنهج الأساسي"}
+</span>
 </div>
 
 <div class="classes-checkbox-grid">
@@ -3095,6 +3204,17 @@ async function(){
 const teacherName =
 bulkTeacherSelect.value;
 
+const curriculumType =
+bulkCurriculumSelect.value ||
+"basic";
+
+const curriculumLabel =
+curriculumType === "additional"
+?
+"المنهج الإضافي"
+:
+"المنهج الأساسي";
+
 if(!teacherName){
 
 alert(
@@ -3121,17 +3241,51 @@ selectedClasses.length === 0
 
 const removeAll =
 confirm(
-"لم تحدد أي فصل. هل تريد حذف جميع إسنادات هذا المعلم؟"
+`لم تحدد أي فصل. هل تريد حذف جميع إسنادات ${curriculumLabel} لهذا المعلم؟`
 );
 
 if(!removeAll){
 return;
 }
 
-await deleteTeacherAssignments(
-teacherName,
-false
+try{
+
+const related =
+cachedAssignments.filter(
+item=>
+item.teacherName === teacherName
+&&
+(
+item.curriculumType ||
+"basic"
+) === curriculumType
 );
+
+await Promise.all(
+related.map(
+item=>
+deleteDoc(
+doc(
+db,
+"assignments",
+item.id
+)
+)
+)
+);
+
+alert(
+`تم حذف إسنادات ${curriculumLabel} للمعلم ${teacherName}`
+);
+
+await refreshAssignmentPage();
+
+}catch(error){
+
+console.error(error);
+alert("حدث خطأ أثناء حذف الإسناد");
+
+}
 
 return;
 
@@ -3139,12 +3293,24 @@ return;
 
 try{
 
+/*
+إسنادات هذا المعلم لهذا النوع من المنهج فقط.
+لا نلمس إسناداته في النوع الآخر.
+*/
 const current =
 cachedAssignments.filter(
 item=>
 item.teacherName === teacherName
+&&
+(
+item.curriculumType ||
+"basic"
+) === curriculumType
 );
 
+/*
+حذف الفصول التي أزال المعلم تحديدها من نفس نوع المنهج.
+*/
 const toDelete =
 current.filter(
 item=>
@@ -3166,37 +3332,73 @@ item.id
 )
 );
 
-const existingClassNames =
-current.map(
-item=>item.className
+/*
+لكل فصل تم اختياره:
+إذا كان نفس الفصل + نفس المنهج مسندًا لمعلم آخر،
+يتم نقل الإسناد للمعلم الحالي حتى لا يحدث تعارض.
+*/
+for(
+const className
+of
+selectedClasses
+){
+
+const conflicting =
+cachedAssignments.filter(
+item=>
+item.className === className
+&&
+(
+item.curriculumType ||
+"basic"
+) === curriculumType
+&&
+item.teacherName !== teacherName
 );
 
-const toAdd =
-selectedClasses.filter(
-className=>
-!existingClassNames.includes(
-className
+if(conflicting.length > 0){
+
+await Promise.all(
+conflicting.map(
+item=>
+deleteDoc(
+doc(
+db,
+"assignments",
+item.id
+)
+)
 )
 );
 
-await Promise.all(
-toAdd.map(
-className=>
-addDoc(
+}
+
+const existsForCurrent =
+current.some(
+item=>
+item.className === className
+);
+
+if(!existsForCurrent){
+
+await addDoc(
 collection(
 db,
 "assignments"
 ),
 {
 teacherName,
-className
+className,
+curriculumType
 }
-)
-)
 );
 
+}
+
+}
+
 alert(
-`تم حفظ إسناد ${teacherName} بنجاح`
+`تم حفظ إسناد ${teacherName} - ${curriculumLabel} بنجاح`
 );
 
 await refreshAssignmentPage();
@@ -3259,22 +3461,35 @@ sensitivity:"base"
 )
 );
 
-let classesHtml = "";
+const basicAssignments =
+teacherAssignments.filter(
+item=>
+(
+item.curriculumType ||
+"basic"
+) === "basic"
+);
 
-if(
-teacherAssignments.length === 0
-){
+const additionalAssignments =
+teacherAssignments.filter(
+item=>
+(
+item.curriculumType ||
+"basic"
+) === "additional"
+);
 
-classesHtml = `
+const renderChips =
+(items)=>{
+if(items.length === 0){
+return `
 <div class="empty-assignment">
-لا توجد فصول مسندة لهذا المعلم.
+لا توجد فصول مسندة.
 </div>
 `;
+}
 
-}else{
-
-classesHtml =
-teacherAssignments
+return items
 .map(
 item=>`
 <span class="assigned-class-chip">
@@ -3283,8 +3498,7 @@ ${item.className}
 `
 )
 .join("");
-
-}
+};
 
 html += `
 <div class="assignment-teacher-block">
@@ -3306,8 +3520,24 @@ ${JSON.stringify(teacher.name)}
 
 </div>
 
+<div class="assignment-curriculum-title">
+<span class="curriculum-badge curriculum-basic">
+المنهج الأساسي
+</span>
+</div>
+
 <div class="assigned-classes">
-${classesHtml}
+${renderChips(basicAssignments)}
+</div>
+
+<div class="assignment-curriculum-title">
+<span class="curriculum-badge curriculum-additional">
+المنهج الإضافي
+</span>
+</div>
+
+<div class="assigned-classes">
+${renderChips(additionalAssignments)}
 </div>
 
 </div>
@@ -3543,6 +3773,17 @@ const examScope =
 exam.examScope ||
 "all";
 
+const curriculumType =
+exam.curriculumType ||
+"basic";
+
+const curriculumHtml =
+curriculumType === "additional"
+?
+`<span class="curriculum-badge curriculum-additional">المنهج الإضافي</span>`
+:
+`<span class="curriculum-badge curriculum-basic">المنهج الأساسي</span>`;
+
 let scopeHtml = "";
 
 if(
@@ -3599,6 +3840,10 @@ ${exam.examName || ""}
 
 <td>
 ${exam.maxDegree || ""}
+</td>
+
+<td>
+${curriculumHtml}
 </td>
 
 <td>
