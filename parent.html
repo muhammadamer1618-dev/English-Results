@@ -327,14 +327,15 @@ overflow-wrap:anywhere!important;
 }
 
 /* توزيع الأعمدة على عرض الورقة */
-th:nth-child(1),td:nth-child(1){width:13%!important}
-th:nth-child(2),td:nth-child(2){width:13%!important}
-th:nth-child(3),td:nth-child(3){width:18%!important}
-th:nth-child(4),td:nth-child(4){width:9%!important}
-th:nth-child(5),td:nth-child(5){width:11%!important}
-th:nth-child(6),td:nth-child(6){width:12%!important}
-th:nth-child(7),td:nth-child(7){width:10%!important}
-th:nth-child(8),td:nth-child(8){width:14%!important}
+th:nth-child(1),td:nth-child(1){width:11%!important}
+th:nth-child(2),td:nth-child(2){width:10%!important}
+th:nth-child(3),td:nth-child(3){width:11%!important}
+th:nth-child(4),td:nth-child(4){width:17%!important}
+th:nth-child(5),td:nth-child(5){width:8%!important}
+th:nth-child(6),td:nth-child(6){width:10%!important}
+th:nth-child(7),td:nth-child(7){width:11%!important}
+th:nth-child(8),td:nth-child(8){width:9%!important}
+th:nth-child(9),td:nth-child(9){width:13%!important}
 
 .status-badge,
 .curriculum-badge{
@@ -433,6 +434,7 @@ autocomplete="off"
 <thead>
 <tr>
 <th>الاختبار</th>
+<th>تاريخ الاختبار</th>
 <th>المنهج</th>
 <th>المعلم</th>
 <th>الحالة</th>
@@ -503,7 +505,8 @@ examScope:data.examScope || "all",
 assignedClasses:Array.isArray(data.assignedClasses)
 ? data.assignedClasses
 : [],
-curriculumType:data.curriculumType || "basic"
+curriculumType:data.curriculumType || "basic",
+examDate:data.examDate || ""
 });
 
 });
@@ -789,6 +792,7 @@ if(attendance === "absent"){
 html += `
 <tr>
 <td>${exam.examName}</td>
+<td>${exam.examDate || "-"}</td>
 <td><span class="curriculum-badge ${curriculumClass}">${curriculumLabel}</span></td>
 <td>${teacherName}</td>
 <td><span class="status-badge status-absent">غائب</span></td>
@@ -841,6 +845,7 @@ count++;
 html += `
 <tr>
 <td>${exam.examName}</td>
+<td>${exam.examDate || "-"}</td>
 <td><span class="curriculum-badge ${curriculumClass}">${curriculumLabel}</span></td>
 <td>${teacherName}</td>
 <td><span class="status-badge status-present">حاضر</span></td>
@@ -856,6 +861,7 @@ html += `
 html += `
 <tr>
 <td>${exam.examName}</td>
+<td>${exam.examDate || "-"}</td>
 <td><span class="curriculum-badge ${curriculumClass}">${curriculumLabel}</span></td>
 <td>${teacherName}</td>
 <td>-</td>
@@ -874,7 +880,7 @@ if(allowedExams.length === 0){
 
 html = `
 <tr>
-<td colspan="8">
+<td colspan="9">
 لا توجد اختبارات مسندة للطالب حتى الآن
 </td>
 </tr>
