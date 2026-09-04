@@ -818,6 +818,7 @@ class="hidden"
 
 <tr>
 <th>اسم الطالب</th>
+<th>رقم الهوية</th>
 <th>الفصل</th>
 <th>رقم ولي الأمر</th>
 <th>الإجراءات</th>
@@ -1054,6 +1055,17 @@ id="phoneGroup"
 type="text"
 id="phoneInput"
 placeholder="رقم ولي الأمر"
+/>
+</div>
+
+<div
+class="input-group hidden"
+id="identityGroup"
+>
+<input
+type="text"
+id="identityInput"
+placeholder="رقم الهوية"
 />
 </div>
 
@@ -1585,6 +1597,14 @@ data.phone ||
 "";
 
 document
+.getElementById("identityInput")
+.value =
+data.identityNumber ||
+data.nationalId ||
+data.identity ||
+"";
+
+document
 .getElementById("degreeInput")
 .value =
 data.maxDegree || "";
@@ -1603,6 +1623,10 @@ document
 
 document
 .getElementById("phoneGroup")
+.classList.add("hidden");
+
+document
+.getElementById("identityGroup")
 .classList.add("hidden");
 
 document
@@ -1721,6 +1745,10 @@ document
 
 document
 .getElementById("phoneGroup")
+.classList.remove("hidden");
+
+document
+.getElementById("identityGroup")
 .classList.remove("hidden");
 
 const parsedClass =
@@ -1854,6 +1882,12 @@ document
 const guardianPhone =
 document
 .getElementById("phoneInput")
+.value
+.trim();
+
+const identityNumber =
+document
+.getElementById("identityInput")
 .value
 .trim();
 
@@ -2020,6 +2054,13 @@ if(
 currentType === "student"
 ){
 
+if(!identityNumber){
+
+alert("أدخل رقم الهوية");
+return;
+
+}
+
 if(!gradeName){
 
 alert("اختر الصف");
@@ -2056,6 +2097,38 @@ await getDocs(
 collection(db,"students")
 );
 
+const identityDuplicate =
+duplicateSnapshot.docs.find(item=>{
+
+if(editId && item.id === editId){
+return false;
+}
+
+const s = item.data();
+
+return (
+String(
+s.identityNumber ||
+s.nationalId ||
+s.identity ||
+""
+).trim()
+===
+identityNumber
+);
+
+});
+
+if(identityDuplicate){
+
+alert(
+"رقم الهوية مسجل بالفعل لطالب آخر، ولن تتم إضافة سجل مكرر."
+);
+
+return;
+
+}
+
 const duplicate =
 duplicateSnapshot.docs.find(item=>{
 
@@ -2085,6 +2158,7 @@ return;
 
 const payload = {
 name,
+identityNumber,
 className,
 gradeName,
 sectionName,
@@ -2888,7 +2962,7 @@ document
 
 table.innerHTML = `
 <tr class="loading-row">
-<td colspan="4">
+<td colspan="5">
 جاري تحميل الطلاب...
 </td>
 </tr>
@@ -2959,7 +3033,7 @@ student.className ||
 
 html += `
 <tr class="class-divider">
-<td colspan="4">
+<td colspan="5">
 ${currentClass}
 </td>
 </tr>
@@ -2978,6 +3052,16 @@ font-size:13px;
 "
 >
 ${student.name || ""}
+</td>
+
+<td
+style="
+padding:8px;
+font-size:12px;
+direction:ltr;
+"
+>
+${student.identityNumber || student.nationalId || student.identity || ""}
 </td>
 
 <td
@@ -3109,7 +3193,7 @@ document
 
 table.innerHTML = `
 <tr class="loading-row">
-<td colspan="4">
+<td colspan="5">
 جاري حذف جميع الطلاب...
 </td>
 </tr>
@@ -4340,6 +4424,11 @@ String(
 rows[i][1] || ""
 ).trim();
 
+const identityNumber =
+String(
+rows[i][2] || ""
+).trim();
+
 const guardianPhone =
 String(
 rows[i][3] || ""
@@ -4355,7 +4444,7 @@ String(
 rows[i][5] || ""
 ).trim();
 
-if(!name || !gradeName || !sectionName){
+if(!name || !identityNumber || !gradeName || !sectionName){
 continue;
 }
 
@@ -4366,11 +4455,7 @@ const className =
 .trim();
 
 const key =
-normalizeStudentKey(name)
-+
-"|||"
-+
-normalizeStudentKey(className);
+String(identityNumber).trim();
 
 /* منع التكرار داخل ملف Excel نفسه */
 if(fileKeys.has(key)){
@@ -4381,6 +4466,7 @@ fileKeys.add(key);
 
 importedStudents.push({
 name,
+identityNumber,
 guardianPhone,
 gradeName,
 sectionName,
@@ -4473,15 +4559,23 @@ existingSnapshot.forEach(item=>{
 const student =
 item.data();
 
+const storedIdentity =
+String(
+student.identityNumber ||
+student.nationalId ||
+student.identity ||
+""
+).trim();
+
 const key =
-normalizeStudentKey(
-student.name
-)
+storedIdentity
+||
+(
+normalizeStudentKey(student.name)
 +
 "|||"
 +
-normalizeStudentKey(
-student.className
+normalizeStudentKey(student.className)
 );
 
 if(!existingMap.has(key)){
@@ -4510,14 +4604,39 @@ of
 importedStudents
 ){
 
-const existing =
+let existing =
 existingMap.get(
 student.key
 );
 
+if(!existing){
+
+existing =
+existingMap.get(
+normalizeStudentKey(student.name)
++
+"|||"
++
+normalizeStudentKey(student.className)
+);
+
+}
+
 if(existing){
 
 const payload = {};
+
+if(
+String(
+existing.identityNumber ||
+existing.nationalId ||
+existing.identity ||
+""
+).trim()
+!== student.identityNumber
+){
+payload.identityNumber = student.identityNumber;
+}
 
 const oldPhone =
 String(
@@ -4582,6 +4701,7 @@ db,
 ),
 {
 name:student.name,
+identityNumber:student.identityNumber,
 className:student.className,
 gradeName:student.gradeName,
 sectionName:student.sectionName,
