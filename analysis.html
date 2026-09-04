@@ -1456,6 +1456,254 @@
     }
 }
 
+
+/* =========================================================
+   نسخة طباعة A4 طولية - مضغوطة لعرض عدد أكبر من الطلاب
+========================================================= */
+@media print{
+
+    @page{
+        size:A4 portrait !important;
+        margin:4mm !important;
+    }
+
+    html,
+    body{
+        width:auto !important;
+        max-width:none !important;
+        min-width:0 !important;
+        margin:0 !important;
+        padding:0 !important;
+        overflow:visible !important;
+        background:#fff !important;
+    }
+
+    .dashboard-layout,
+    .main,
+    .section,
+    .analysis-page{
+        width:100% !important;
+        max-width:none !important;
+        min-width:0 !important;
+        margin:0 !important;
+        padding:0 !important;
+        overflow:visible !important;
+    }
+
+    .report-sheet{
+        width:100% !important;
+        max-width:none !important;
+        min-width:0 !important;
+        margin:0 !important;
+        padding:0 !important;
+        border:none !important;
+        border-radius:0 !important;
+        box-shadow:none !important;
+        overflow:visible !important;
+    }
+
+    /* هيدر أقصر لتوفير مساحة للطلاب */
+    .report-header{
+        height:23mm !important;
+        min-height:23mm !important;
+        grid-template-columns:1fr 18mm !important;
+        gap:1.5mm !important;
+        padding:1.5mm 2.5mm !important;
+        border-bottom:.9mm solid var(--report-gold) !important;
+    }
+
+    .logo-circle{
+        width:16mm !important;
+        height:16mm !important;
+    }
+
+    .report-title{
+        font-size:9pt !important;
+        line-height:1.1 !important;
+    }
+
+    .report-school{
+        font-size:6.7pt !important;
+        margin-top:.3mm !important;
+    }
+
+    .report-info{
+        margin-top:.5mm !important;
+        gap:.3mm 1.2mm !important;
+        font-size:5pt !important;
+        line-height:1 !important;
+    }
+
+    .report-body{
+        width:100% !important;
+        padding:1mm !important;
+        box-sizing:border-box !important;
+    }
+
+    .report-block{
+        margin-bottom:.8mm !important;
+        border-radius:.7mm !important;
+    }
+
+    .block-title{
+        height:4.4mm !important;
+        padding:.8mm 1.5mm !important;
+        font-size:6.5pt !important;
+        line-height:1 !important;
+    }
+
+    /* سلم الدرجات مضغوط */
+    .grade-scale-table th,
+    .grade-scale-table td{
+        height:4mm !important;
+        padding:.45mm .6mm !important;
+        font-size:5.4pt !important;
+        line-height:1 !important;
+    }
+
+    /* الإحصائيات أقصر */
+    .stats-row{
+        height:13mm !important;
+        gap:.7mm !important;
+        padding:.7mm !important;
+    }
+
+    .stat-box{
+        padding:.7mm !important;
+        border-radius:.7mm !important;
+    }
+
+    .stat-label{
+        font-size:4.9pt !important;
+        line-height:1 !important;
+    }
+
+    .stat-value{
+        margin-top:.5mm !important;
+        font-size:7.5pt !important;
+        line-height:1 !important;
+    }
+
+    /* جدول الطلاب أصغر وأقصر ليناسب A4 الطولي */
+    .students-table{
+        width:100% !important;
+        table-layout:fixed !important;
+    }
+
+    .students-table th{
+        height:4.2mm !important;
+        padding:.45mm !important;
+        font-size:5.5pt !important;
+        line-height:1 !important;
+    }
+
+    .students-table td{
+        height:3.45mm !important;
+        min-height:3.45mm !important;
+        max-height:3.45mm !important;
+        padding:.2mm .55mm !important;
+        font-size:5.2pt !important;
+        line-height:1 !important;
+        vertical-align:middle !important;
+    }
+
+    .students-table tr{
+        height:3.45mm !important;
+        break-inside:avoid !important;
+        page-break-inside:avoid !important;
+    }
+
+    .students-table th:nth-child(1),
+    .students-table td:nth-child(1){
+        width:6% !important;
+    }
+
+    .students-table th:nth-child(2),
+    .students-table td:nth-child(2){
+        width:55% !important;
+    }
+
+    .students-table th:nth-child(3),
+    .students-table td:nth-child(3){
+        width:13% !important;
+    }
+
+    .students-table th:nth-child(4),
+    .students-table td:nth-child(4){
+        width:26% !important;
+    }
+
+    .students-table td:nth-child(2){
+        padding-right:1.2mm !important;
+        white-space:nowrap !important;
+        overflow:hidden !important;
+        text-overflow:ellipsis !important;
+    }
+
+    .category{
+        min-width:15mm !important;
+        padding:.2mm .7mm !important;
+        font-size:4.7pt !important;
+        line-height:1 !important;
+        border-radius:.5mm !important;
+    }
+
+    /* الملخص والرسم البياني جنب بعض في A4 طولي */
+    .bottom-grid{
+        width:100% !important;
+        height:32mm !important;
+        display:grid !important;
+        grid-template-columns:42% 58% !important;
+        gap:1mm !important;
+        padding:.8mm !important;
+        box-sizing:border-box !important;
+        align-items:stretch !important;
+    }
+
+    .summary-table{
+        width:100% !important;
+        height:100% !important;
+        table-layout:fixed !important;
+    }
+
+    .summary-table th,
+    .summary-table td{
+        padding:.35mm !important;
+        font-size:4.8pt !important;
+        line-height:1 !important;
+    }
+
+    .chart-box{
+        width:100% !important;
+        height:30mm !important;
+        padding:.5mm !important;
+        box-sizing:border-box !important;
+        min-width:0 !important;
+    }
+
+    .chart-box canvas{
+        width:100% !important;
+        max-width:100% !important;
+        height:100% !important;
+    }
+
+    /* التوقيعات مضغوطة */
+    .report-footer{
+        height:12mm !important;
+    }
+
+    .report-footer td{
+        padding:.6mm !important;
+        font-size:4.8pt !important;
+        line-height:1 !important;
+    }
+
+    .signature-line{
+        margin:.9mm auto .35mm !important;
+    }
+
+}
+
 </style>
 
 </head>
