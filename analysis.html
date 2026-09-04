@@ -1704,6 +1704,28 @@
 
 }
 
+
+/* =========================================================
+   تحسينات نهائية للطباعة
+========================================================= */
+.signature-line{
+    display:none !important;
+}
+
+@media print{
+    .chart-box{
+        overflow:visible !important;
+    }
+
+    #analysisChart{
+        image-rendering:auto !important;
+    }
+
+    .report-footer td{
+        vertical-align:middle !important;
+    }
+}
+
 </style>
 
 </head>
@@ -2370,10 +2392,7 @@ id="reportSheet">
     <tr>
 
         <td>
-
-            <span class="signature-line"></span>
-
-            <span id="footerTeacher">
+<span id="footerTeacher">
                 -
             </span>
 
@@ -2381,10 +2400,7 @@ id="reportSheet">
 
 
         <td>
-
-            <span class="signature-line"></span>
-
-            <span id="footerSupervisor">
+<span id="footerSupervisor">
                 محمد عامر أحمد
             </span>
 
@@ -2392,19 +2408,13 @@ id="reportSheet">
 
 
         <td>
-
-            <span class="signature-line"></span>
-
-            أحمد سمير
+أحمد سمير
 
         </td>
 
 
         <td>
-
-            <span class="signature-line"></span>
-
-            سعيد بن علي الجمعان
+عبد العزيز بن إبراهيم القحطاني
 
         </td>
 
@@ -4173,6 +4183,7 @@ function drawChart(
 
             options:{
 
+                devicePixelRatio:4,
 
                 responsive:true,
 
@@ -4219,7 +4230,7 @@ function drawChart(
                             font:{
 
 
-                                size:9,
+                                size:11,
 
 
                                 weight:
@@ -4282,6 +4293,37 @@ function drawChart(
 
 
 }
+
+
+
+/* =========================================================
+   تحسين دقة الرسم البياني قبل الطباعة
+========================================================= */
+window.addEventListener("beforeprint", ()=>{
+
+    if(chartInstance){
+
+        chartInstance.options.devicePixelRatio = 4;
+
+        chartInstance.resize();
+
+        chartInstance.update("none");
+
+    }
+
+});
+
+window.addEventListener("afterprint", ()=>{
+
+    if(chartInstance){
+
+        chartInstance.resize();
+
+        chartInstance.update("none");
+
+    }
+
+});
 
 
 /* =========================================================
