@@ -436,12 +436,17 @@ width:12% !important;
 
 #examsSection th:nth-child(5),
 #examsSection td:nth-child(5){
-width:38% !important;
+width:12% !important;
 }
 
 #examsSection th:nth-child(6),
 #examsSection td:nth-child(6){
-width:14% !important;
+width:28% !important;
+}
+
+#examsSection th:nth-child(7),
+#examsSection td:nth-child(7){
+width:12% !important;
 }
 
 #examsSection .exam-scope-chip{
@@ -952,6 +957,7 @@ onclick="openModal('exam')"
 <th>الترتيب</th>
 <th>الاختبار</th>
 <th>الدرجة النهائية</th>
+<th>تاريخ الاختبار</th>
 <th>المنهج</th>
 <th>نطاق الاختبار</th>
 <th>الإجراءات</th>
@@ -1123,6 +1129,16 @@ id="degreeGroup"
 type="number"
 id="degreeInput"
 placeholder="الدرجة النهائية"
+/>
+</div>
+
+<div
+class="input-group hidden"
+id="examDateGroup"
+>
+<input
+type="date"
+id="examDateInput"
 />
 </div>
 
@@ -1610,6 +1626,11 @@ document
 data.maxDegree || "";
 
 document
+.getElementById("examDateInput")
+.value =
+data.examDate || "";
+
+document
 .getElementById("nameGroup")
 .classList.remove("hidden");
 
@@ -1643,6 +1664,10 @@ document
 
 document
 .getElementById("degreeGroup")
+.classList.add("hidden");
+
+document
+.getElementById("examDateGroup")
 .classList.add("hidden");
 
 document
@@ -1792,6 +1817,10 @@ document
 .classList.remove("hidden");
 
 document
+.getElementById("examDateGroup")
+.classList.remove("hidden");
+
+document
 .getElementById("examCurriculumGroup")
 .classList.remove("hidden");
 
@@ -1912,6 +1941,12 @@ const className =
 const maxDegree =
 document
 .getElementById("degreeInput")
+.value
+.trim();
+
+const examDate =
+document
+.getElementById("examDateInput")
 .value
 .trim();
 
@@ -2208,6 +2243,16 @@ return;
 
 }
 
+if(!examDate){
+
+alert(
+"حدد تاريخ الاختبار"
+);
+
+return;
+
+}
+
 const scopeElement =
 document.querySelector(
 'input[name="examScope"]:checked'
@@ -2271,6 +2316,8 @@ examName:name,
 
 maxDegree:
 Number(maxDegree),
+
+examDate,
 
 curriculumType:
 examCurriculumType,
@@ -4180,6 +4227,10 @@ ${exam.examName || ""}
 
 <td>
 ${exam.maxDegree || ""}
+</td>
+
+<td>
+${exam.examDate || "-"}
 </td>
 
 <td>
