@@ -2124,6 +2124,8 @@ let exams = [];
 
 let chartInstance = null;
 
+let selectedCurriculumType = "basic";
+
 
 /* =========================================================
    تحميل المعلمين
@@ -2276,7 +2278,10 @@ async function loadExams(){
 
             :
 
-            []
+            [],
+
+            curriculumType:
+            data.curriculumType || "basic"
 
 
         });
@@ -2302,59 +2307,44 @@ async function loadExams(){
 ========================================================= */
 
 function filterExamsForClass(
-    className
+    className,
+    curriculumType
 ){
 
+    const wantedCurriculum =
+    curriculumType || "basic";
 
     exams =
-
     allExams.filter(exam=>{
 
+        if(
+            (exam.curriculumType || "basic")
+            !==
+            wantedCurriculum
+        ){
+            return false;
+        }
 
         if(
-
             !exam.examScope
-
             ||
-
             exam.examScope === "all"
-
         ){
-
             return true;
-
         }
-
 
         if(
-
             exam.examScope === "selected"
-
         ){
-
             return(
-
-                Array.isArray(
-                    exam.assignedClasses
-                )
-
+                Array.isArray(exam.assignedClasses)
                 &&
-
-                exam.assignedClasses.includes(
-                    className
-                )
-
+                exam.assignedClasses.includes(className)
             );
-
         }
-
 
         return true;
-
-
     });
-
-
 }
 
 
@@ -2432,8 +2422,15 @@ classSelect.addEventListener(
         }
 
 
+        const selectedOption =
+        classSelect.options[classSelect.selectedIndex];
+
+        selectedCurriculumType =
+        selectedOption?.dataset?.curriculum || "basic";
+
         filterExamsForClass(
-            className
+            className,
+            selectedCurriculumType
         );
 
 
@@ -2500,68 +2497,63 @@ async function loadTeacherClasses(){
     );
 
 
-    const classes = [];
+    const classAssignments = [];
 
 
     snapshot.forEach(item=>{
 
+        const data = item.data();
 
         const className =
-        item.data().className;
+        data.className;
 
+        const curriculumType =
+        data.curriculumType || "basic";
 
         if(
-
             className
-
             &&
-
-            !classes.includes(
-                className
+            !classAssignments.some(x=>
+                x.className === className
+                &&
+                x.curriculumType === curriculumType
             )
-
         ){
-
-            classes.push(
-                className
-            );
-
+            classAssignments.push({
+                className,
+                curriculumType
+            });
         }
-
 
     });
 
 
-    classes.sort(
-
+    classAssignments.sort(
         (a,b)=>
-
-        a.localeCompare(
-
-            b,
-
+        a.className.localeCompare(
+            b.className,
             "ar",
-
             {
-
                 numeric:true,
-
                 sensitivity:"base"
-
             }
-
         )
-
     );
 
 
-    classes.forEach(className=>{
+    classAssignments.forEach(item=>{
 
+        const curriculumLabel =
+        item.curriculumType === "additional"
+        ?
+        "المنهج الإضافي"
+        :
+        "المنهج الأساسي";
 
         classSelect.innerHTML +=
-
-        `<option>${className}</option>`;
-
+        `<option value="${item.className}" data-curriculum="${item.curriculumType}">
+        ${item.className} — ${curriculumLabel}
+        </option>`;
 
     });
 
@@ -2846,6 +2838,13 @@ async function(){
     const maxDegree =
     selectedExam.maxDegree;
 
+    const curriculumLabel =
+    selectedCurriculumType === "additional"
+    ?
+    "المنهج الإضافي"
+    :
+    "المنهج الأساسي";
+
 
 /* =========================================================
    المديات
@@ -2950,6 +2949,14 @@ async function(){
 
     <span>
     المادة: اللغة الإنجليزية
+    </span>
+
+    <span class="report-info-separator">
+    |
+    </span>
+
+    <span>
+    المنهج: ${curriculumLabel}
     </span>
 
     <span class="report-info-separator">
@@ -3126,11 +3133,15 @@ async function(){
 
     gradesSnapshot.forEach(item=>{
 
+        const data = item.data();
 
-        grades.push(
-            item.data()
-        );
-
+        if(
+            (data.curriculumType || "basic")
+            ===
+            selectedCurriculumType
+        ){
+            grades.push(data);
+        }
 
     });
 
@@ -3230,7 +3241,17 @@ async function(){
 
         const grade =
 
-        gradeData
+        (
+            gradeData
+            &&
+            gradeData.attendance !== "absent"
+            &&
+            gradeData.grade !== ""
+            &&
+            gradeData.grade !== undefined
+            &&
+            gradeData.grade !== null
+        )
 
         ?
 
