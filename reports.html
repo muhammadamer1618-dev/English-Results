@@ -575,7 +575,10 @@ data.assignedClasses
 curriculumType تعتبر منهجًا أساسيًا.
 */
 curriculumType:
-data.curriculumType || "basic"
+data.curriculumType || "basic",
+
+examDate:
+data.examDate || ""
 
 });
 
@@ -1032,6 +1035,10 @@ head += `
 <th>
 ${exam.examName}
 <br>
+<span style="font-size:9px;font-weight:900;">
+${exam.examDate ? `التاريخ: ${exam.examDate}` : ""}
+</span>
+${exam.examDate ? "<br>" : ""}
 من ${exam.maxDegree}
 </th>
 `;
