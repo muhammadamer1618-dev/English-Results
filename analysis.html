@@ -1429,6 +1429,33 @@
 
 }
 
+
+/* =========================================================
+   إصلاح ظهور أسماء الطلاب والدرجات داخل جدول النتائج
+========================================================= */
+.students-table td{
+    color:#0f172a !important;
+}
+
+.students-table td:nth-child(1),
+.students-table td:nth-child(2),
+.students-table td:nth-child(3){
+    color:#0f172a !important;
+}
+
+.students-table td:nth-child(2){
+    font-weight:900 !important;
+}
+
+@media print{
+    .students-table td,
+    .students-table td:nth-child(1),
+    .students-table td:nth-child(2),
+    .students-table td:nth-child(3){
+        color:#000000 !important;
+    }
+}
+
 </style>
 
 </head>
