@@ -1309,6 +1309,126 @@
 
 }
 
+
+/* =========================================================
+   إصلاح نهائي لطباعة التحليل بدون قص من الجوانب
+========================================================= */
+@media print{
+
+    @page{
+        size:A4 landscape !important;
+        margin:5mm !important;
+    }
+
+    html,
+    body{
+        width:auto !important;
+        max-width:none !important;
+        min-width:0 !important;
+        margin:0 !important;
+        padding:0 !important;
+        overflow:visible !important;
+        background:#fff !important;
+    }
+
+    .dashboard-layout,
+    .main,
+    .section,
+    .analysis-page{
+        width:100% !important;
+        max-width:none !important;
+        min-width:0 !important;
+        margin:0 !important;
+        padding:0 !important;
+        overflow:visible !important;
+    }
+
+    .report-sheet{
+        width:100% !important;
+        max-width:none !important;
+        min-width:0 !important;
+        height:auto !important;
+        margin:0 !important;
+        padding:0 !important;
+        box-sizing:border-box !important;
+        overflow:visible !important;
+        transform:none !important;
+    }
+
+    .report-header{
+        width:100% !important;
+        min-width:0 !important;
+        box-sizing:border-box !important;
+        grid-template-columns:1fr 24mm !important;
+        padding:2.5mm 4mm !important;
+    }
+
+    .report-body{
+        width:100% !important;
+        min-width:0 !important;
+        padding:2mm !important;
+        box-sizing:border-box !important;
+    }
+
+    .report-block,
+    .stats-row,
+    .bottom-grid,
+    .grade-scale-table,
+    .students-table,
+    .summary-table,
+    .report-footer{
+        width:100% !important;
+        max-width:100% !important;
+        min-width:0 !important;
+        box-sizing:border-box !important;
+    }
+
+    .students-table{
+        table-layout:fixed !important;
+    }
+
+    .students-table th,
+    .students-table td{
+        word-break:break-word !important;
+        overflow-wrap:anywhere !important;
+    }
+
+    .students-table th:nth-child(1),
+    .students-table td:nth-child(1){
+        width:6% !important;
+    }
+
+    .students-table th:nth-child(2),
+    .students-table td:nth-child(2){
+        width:52% !important;
+    }
+
+    .students-table th:nth-child(3),
+    .students-table td:nth-child(3){
+        width:14% !important;
+    }
+
+    .students-table th:nth-child(4),
+    .students-table td:nth-child(4){
+        width:28% !important;
+    }
+
+    .bottom-grid{
+        grid-template-columns:32% 68% !important;
+        gap:2mm !important;
+    }
+
+    .chart-box{
+        width:100% !important;
+        min-width:0 !important;
+    }
+
+    canvas{
+        max-width:100% !important;
+    }
+
+}
+
 </style>
 
 </head>
