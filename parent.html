@@ -27,28 +27,6 @@ border-radius:50%;
 object-fit:cover;
 }
 
-.children-grid{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-gap:12px;
-margin:18px 0;
-}
-
-.child-card{
-background:#020617;
-border:1px solid rgba(255,255,255,.08);
-border-radius:16px;
-padding:16px;
-cursor:pointer;
-font-weight:900;
-text-align:center;
-color:white;
-}
-
-.child-card:hover{
-border-color:#facc15;
-}
-
 #reportArea .stats-grid{
 grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
 gap:16px;
@@ -84,6 +62,40 @@ word-break:normal;
 font-size:28px !important;
 }
 
+.status-badge,
+.curriculum-badge{
+display:inline-block;
+padding:5px 9px;
+border-radius:12px;
+font-size:12px;
+font-weight:900;
+white-space:nowrap;
+}
+
+.status-present{
+background:rgba(34,197,94,.15);
+color:#4ade80;
+border:1px solid rgba(34,197,94,.35);
+}
+
+.status-absent{
+background:rgba(220,38,38,.15);
+color:#f87171;
+border:1px solid rgba(220,38,38,.35);
+}
+
+.curriculum-basic{
+background:rgba(34,197,94,.12);
+color:#22c55e;
+border:1px solid rgba(34,197,94,.35);
+}
+
+.curriculum-additional{
+background:rgba(59,130,246,.12);
+color:#60a5fa;
+border:1px solid rgba(59,130,246,.35);
+}
+
 .support-message{
 margin-top:22px;
 padding:18px;
@@ -103,9 +115,30 @@ font-weight:900;
 color:#94a3b8;
 }
 
+.table-wrap{
+width:100%;
+overflow-x:auto;
+}
+
+table{
+width:100%;
+}
+
+@media(max-width:800px){
+.parent-card{
+padding:14px;
+border-radius:16px;
+}
+table{
+font-size:12px;
+}
+th,td{
+padding:7px 5px !important;
+}
+}
+
 @media print{
 .search-area,
-.children-grid,
 .print-actions{
 display:none!important;
 }
@@ -130,9 +163,9 @@ td{
 border:1px solid #000!important;
 color:#000!important;
 background:white!important;
-font-size:12px!important;
+font-size:11px!important;
 font-weight:900!important;
-padding:6px!important;
+padding:5px!important;
 text-align:center!important;
 }
 
@@ -144,6 +177,13 @@ border:1px solid #000!important;
 .stat-title,
 .stat-number{
 color:black!important;
+}
+
+.status-badge,
+.curriculum-badge{
+color:#000!important;
+background:white!important;
+border:1px solid #000!important;
 }
 
 .designer-credit{
@@ -170,16 +210,20 @@ color:black!important;
 <div class="search-area">
 
 <div class="input-group" style="max-width:430px;margin:0 auto 18px;">
-<input type="text" id="guardianPhoneInput" placeholder="أدخل رقم جوال ولي الأمر"/>
+<input
+type="text"
+id="studentIdentityInput"
+placeholder="أدخل رقم هوية الطالب"
+inputmode="numeric"
+autocomplete="off"
+/>
 </div>
 
 <div style="text-align:center;margin-bottom:20px;">
-<button class="primary-btn" onclick="searchStudents()">عرض النتائج</button>
+<button class="primary-btn" onclick="searchStudent()">عرض النتائج</button>
 </div>
 
 </div>
-
-<div id="childrenArea" class="children-grid"></div>
 
 <div id="reportArea" style="display:none;">
 
@@ -196,8 +240,8 @@ color:black!important;
 </div>
 
 <div class="stat-card">
-<div class="stat-title">المعلم</div>
-<div class="stat-number" id="teacherNameBox">-</div>
+<div class="stat-title">رقم الهوية</div>
+<div class="stat-number" id="identityBox" style="direction:ltr;">-</div>
 </div>
 
 <div class="stat-card">
@@ -207,10 +251,14 @@ color:black!important;
 
 </div>
 
+<div class="table-wrap">
 <table>
 <thead>
 <tr>
 <th>الاختبار</th>
+<th>المنهج</th>
+<th>المعلم</th>
+<th>الحالة</th>
 <th>درجة الطالب</th>
 <th>الدرجة النهائية</th>
 <th>النسبة</th>
@@ -219,6 +267,7 @@ color:black!important;
 </thead>
 <tbody id="gradesTable"></tbody>
 </table>
+</div>
 
 <div id="supportMessage" class="support-message" style="display:none;"></div>
 
@@ -248,25 +297,12 @@ where
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 let allExams = [];
-let matchedStudents = [];
+let currentStudent = null;
 
-function cleanPhone(phone){
-let value = String(phone || "").trim();
-value = value.replace(/[^\d]/g,"");
-
-if(value.startsWith("00")){
-value = value.slice(2);
-}
-
-if(value.startsWith("0")){
-value = "966" + value.slice(1);
-}
-
-if(!value.startsWith("966") && value.length === 9){
-value = "966" + value;
-}
-
-return value;
+function cleanIdentity(value){
+return String(value || "")
+.trim()
+.replace(/[^\d]/g,"");
 }
 
 async function loadExams(){
@@ -289,39 +325,13 @@ order:Number(data.order || 999),
 examScope:data.examScope || "all",
 assignedClasses:Array.isArray(data.assignedClasses)
 ? data.assignedClasses
-: []
+: [],
+curriculumType:data.curriculumType || "basic"
 });
 
 });
 
 allExams.sort((a,b)=>a.order - b.order);
-
-}
-
-function filterExamsForClass(className){
-
-return allExams.filter(exam=>{
-
-if(
-!exam.examScope ||
-exam.examScope === "all"
-){
-return true;
-}
-
-if(
-exam.examScope === "selected"
-){
-return (
-Array.isArray(exam.assignedClasses)
-&&
-exam.assignedClasses.includes(className)
-);
-}
-
-return true;
-
-});
 
 }
 
@@ -357,87 +367,124 @@ return "normal";
 
 }
 
-window.searchStudents = async function(){
+async function getAssignmentsForClass(className){
 
-const phoneInput =
-document.getElementById("guardianPhoneInput").value.trim();
+const snapshot = await getDocs(
+query(
+collection(db,"assignments"),
+where("className","==",className)
+)
+);
 
-if(!phoneInput){
-alert("أدخل رقم جوال ولي الأمر");
+const assignments = [];
+
+snapshot.forEach(item=>{
+
+const data = item.data();
+
+assignments.push({
+teacherName:data.teacherName || "-",
+className:data.className || "",
+curriculumType:data.curriculumType || "basic"
+});
+
+});
+
+return assignments;
+
+}
+
+function examAllowedForStudent(exam,className,assignments){
+
+const curriculumType =
+exam.curriculumType || "basic";
+
+const hasMatchingTeacher =
+assignments.some(item=>
+(item.curriculumType || "basic") === curriculumType
+);
+
+if(!hasMatchingTeacher){
+return false;
+}
+
+if(
+!exam.examScope ||
+exam.examScope === "all"
+){
+return true;
+}
+
+if(exam.examScope === "selected"){
+return (
+Array.isArray(exam.assignedClasses)
+&&
+exam.assignedClasses.includes(className)
+);
+}
+
+return false;
+
+}
+
+window.searchStudent = async function(){
+
+const identityInput =
+cleanIdentity(
+document.getElementById("studentIdentityInput").value
+);
+
+if(!identityInput){
+alert("أدخل رقم هوية الطالب");
 return;
 }
 
 document.getElementById("reportArea").style.display = "none";
-document.getElementById("childrenArea").innerHTML = "";
-
-const inputPhone = cleanPhone(phoneInput);
 
 const studentsSnapshot =
 await getDocs(collection(db,"students"));
 
-matchedStudents = [];
+currentStudent = null;
 
 studentsSnapshot.forEach(item=>{
 
-const student = {
-id:item.id,
-...item.data()
-};
-
-if(
-cleanPhone(student.guardianPhone)
-===
-inputPhone
-){
-matchedStudents.push(student);
-}
-
-});
-
-if(matchedStudents.length === 0){
-alert("لم يتم العثور على طالب مرتبط بهذا الرقم");
+if(currentStudent){
 return;
 }
 
-matchedStudents.sort((a,b)=>
-(a.name || "").localeCompare(
-b.name || "",
-"ar"
-)
+const data = item.data();
+
+const studentIdentity =
+cleanIdentity(
+data.identityNumber ||
+data.nationalId ||
+data.identity ||
+""
 );
 
-if(matchedStudents.length === 1){
-loadStudentReport(0);
-return;
+if(studentIdentity === identityInput){
+
+currentStudent = {
+id:item.id,
+...data
+};
+
 }
-
-let html = "";
-
-matchedStudents.forEach((student,index)=>{
-
-html += `
-<div
-class="child-card"
-onclick="loadStudentReport(${index})"
->
-<div style="color:#facc15;font-size:17px;margin-bottom:8px;">
-${student.name || "-"}
-</div>
-<div>
-${student.className || "-"}
-</div>
-</div>
-`;
 
 });
 
-document.getElementById("childrenArea").innerHTML = html;
+if(!currentStudent){
+alert("لم يتم العثور على طالب بهذا الرقم");
+return;
+}
+
+await loadStudentReport();
 
 };
 
-window.loadStudentReport = async function(index){
+async function loadStudentReport(){
 
-const student = matchedStudents[index];
+const student = currentStudent;
 
 if(!student){
 return;
@@ -445,9 +492,18 @@ return;
 
 await loadExams();
 
-const allowedExams =
-filterExamsForClass(
+const assignments =
+await getAssignmentsForClass(
 student.className
+);
+
+const allowedExams =
+allExams.filter(exam=>
+examAllowedForStudent(
+exam,
+student.className,
+assignments
+)
 );
 
 const gradesSnapshot = await getDocs(
@@ -461,21 +517,10 @@ where("className","==",student.className)
 const grades = [];
 
 gradesSnapshot.forEach(item=>{
-grades.push(item.data());
+grades.push({
+id:item.id,
+...item.data()
 });
-
-const assignmentSnapshot = await getDocs(
-query(
-collection(db,"assignments"),
-where("className","==",student.className)
-)
-);
-
-let teacherName = "-";
-
-assignmentSnapshot.forEach(item=>{
-teacherName =
-item.data().teacherName || "-";
 });
 
 document.getElementById("studentNameBox").innerText =
@@ -484,8 +529,11 @@ student.name || "-";
 document.getElementById("classNameBox").innerText =
 student.className || "-";
 
-document.getElementById("teacherNameBox").innerText =
-teacherName;
+document.getElementById("identityBox").innerText =
+student.identityNumber ||
+student.nationalId ||
+student.identity ||
+"-";
 
 let html = "";
 let previousPercent = null;
@@ -494,14 +542,94 @@ let count = 0;
 
 allowedExams.forEach(exam=>{
 
+const examCurriculum =
+exam.curriculumType || "basic";
+
+const teacherAssignment =
+assignments.find(item=>
+(item.curriculumType || "basic") === examCurriculum
+);
+
+const teacherName =
+teacherAssignment
+?
+teacherAssignment.teacherName
+:
+"-";
+
 const gradeData =
+grades.find(item=>
+item.examName === exam.examName
+&&
+(item.curriculumType || "basic") === examCurriculum
+&&
+(
+!item.teacherName
+||
+item.teacherName === teacherName
+)
+)
+||
+grades.find(item=>
+item.examName === exam.examName
+&&
+item.teacherName === teacherName
+)
+||
 grades.find(item=>
 item.examName === exam.examName
 );
 
-if(
+const attendance =
+gradeData?.attendance ||
+(
 gradeData &&
 gradeData.grade !== ""
+&&
+gradeData.grade !== undefined
+?
+"present"
+:
+""
+);
+
+const curriculumLabel =
+examCurriculum === "additional"
+?
+"المنهج الإضافي"
+:
+"المنهج الأساسي";
+
+const curriculumClass =
+examCurriculum === "additional"
+?
+"curriculum-additional"
+:
+"curriculum-basic";
+
+if(attendance === "absent"){
+
+html += `
+<tr>
+<td>${exam.examName}</td>
+<td><span class="curriculum-badge ${curriculumClass}">${curriculumLabel}</span></td>
+<td>${teacherName}</td>
+<td><span class="status-badge status-absent">غائب</span></td>
+<td>-</td>
+<td>${exam.maxDegree}</td>
+<td>-</td>
+<td>غائب</td>
+</tr>
+`;
+
+return;
+}
+
+if(
+gradeData &&
+gradeData.grade !== "" &&
+gradeData.grade !== undefined &&
+gradeData.grade !== null
 ){
 
 const grade =
@@ -536,6 +664,9 @@ count++;
 html += `
 <tr>
 <td>${exam.examName}</td>
+<td><span class="curriculum-badge ${curriculumClass}">${curriculumLabel}</span></td>
+<td>${teacherName}</td>
+<td><span class="status-badge status-present">حاضر</span></td>
 <td>${grade}</td>
 <td>${maxDegree}</td>
 <td>${percent}%</td>
@@ -548,6 +679,9 @@ html += `
 html += `
 <tr>
 <td>${exam.examName}</td>
+<td><span class="curriculum-badge ${curriculumClass}">${curriculumLabel}</span></td>
+<td>${teacherName}</td>
+<td>-</td>
 <td>-</td>
 <td>${exam.maxDegree}</td>
 <td>-</td>
@@ -563,8 +697,8 @@ if(allowedExams.length === 0){
 
 html = `
 <tr>
-<td colspan="5">
-لا توجد اختبارات مسندة لفصل الطالب حتى الآن
+<td colspan="8">
+لا توجد اختبارات مسندة للطالب حتى الآن
 </td>
 </tr>
 `;
@@ -581,7 +715,11 @@ totalPercent / count
 0;
 
 document.getElementById("averageBox").innerText =
-average + "%";
+count
+?
+average + "%"
+:
+"-";
 
 document.getElementById("gradesTable").innerHTML =
 html;
@@ -622,7 +760,7 @@ supportMessage.style.display = "none";
 
 document.getElementById("reportArea").style.display = "block";
 
-};
+}
 
 </script>
 
