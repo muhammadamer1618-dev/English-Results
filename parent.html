@@ -7,12 +7,36 @@
 <link rel="stylesheet" href="style.css"/>
 
 <style>
+*{box-sizing:border-box}
+
+html,body{
+margin:0;
+padding:0;
+width:100%;
+min-height:100%;
+}
+
+body{
+background:#0b1120;
+}
+
+.main{
+width:100%;
+max-width:none!important;
+min-height:100vh;
+padding:18px!important;
+margin:0!important;
+}
+
 .parent-card{
-max-width:1050px;
-margin:auto;
+width:100%;
+max-width:none!important;
+min-height:calc(100vh - 36px);
+margin:0!important;
 background:#111827;
-border-radius:24px;
+border-radius:20px;
 padding:24px;
+box-shadow:0 18px 50px rgba(0,0,0,.22);
 }
 
 .parent-header{
@@ -21,53 +45,74 @@ margin-bottom:22px;
 }
 
 .parent-logo{
-width:95px;
-height:95px;
+width:90px;
+height:90px;
 border-radius:50%;
 object-fit:cover;
 }
 
+.search-area{
+max-width:700px;
+margin:0 auto;
+}
+
+#reportArea{
+width:100%;
+max-width:none;
+margin:0 auto;
+}
+
 #reportArea .stats-grid{
-grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-gap:16px;
+display:grid;
+grid-template-columns:2fr 1fr 1.2fr 1fr;
+gap:12px;
+width:100%;
 }
 
 #reportArea .stat-card{
-min-height:125px;
-padding:16px;
+min-width:0;
+min-height:110px;
+padding:14px;
 display:flex;
 flex-direction:column;
 justify-content:center;
 align-items:center;
 text-align:center;
+background:#0f172a;
+border:1px solid rgba(255,255,255,.08);
+border-radius:16px;
 }
 
 #reportArea .stat-title{
-font-size:14px;
+font-size:13px;
 font-weight:800;
 color:#94a3b8;
-margin-bottom:8px;
+margin-bottom:7px;
 }
 
 #reportArea .stat-number{
-font-size:21px;
+width:100%;
+font-size:19px;
 font-weight:900;
-line-height:1.45;
+line-height:1.4;
 color:#facc15;
 overflow-wrap:anywhere;
-word-break:normal;
+}
+
+#studentNameBox{
+font-size:20px!important;
 }
 
 #averageBox{
-font-size:28px !important;
+font-size:27px!important;
 }
 
 .status-badge,
 .curriculum-badge{
 display:inline-block;
-padding:5px 9px;
-border-radius:12px;
-font-size:12px;
+padding:5px 8px;
+border-radius:10px;
+font-size:11px;
 font-weight:900;
 white-space:nowrap;
 }
@@ -97,20 +142,20 @@ border:1px solid rgba(59,130,246,.35);
 }
 
 .support-message{
-margin-top:22px;
-padding:18px;
-border-radius:16px;
+margin-top:18px;
+padding:15px;
+border-radius:14px;
 color:white;
 font-weight:900;
-line-height:1.9;
+line-height:1.75;
 text-align:center;
 }
 
 .designer-credit{
-margin-top:25px;
+margin-top:18px;
 text-align:center;
 font-family:Calibri,Arial,sans-serif;
-font-size:13px;
+font-size:12px;
 font-weight:900;
 color:#94a3b8;
 }
@@ -118,76 +163,208 @@ color:#94a3b8;
 .table-wrap{
 width:100%;
 overflow-x:auto;
+border-radius:14px;
 }
 
 table{
 width:100%;
+min-width:850px;
+border-collapse:collapse;
 }
 
-@media(max-width:800px){
+th,td{
+text-align:center;
+vertical-align:middle;
+}
+
+@media(max-width:900px){
+.main{padding:10px!important}
 .parent-card{
 padding:14px;
-border-radius:16px;
+border-radius:14px;
+min-height:calc(100vh - 20px);
 }
-table{
-font-size:12px;
+#reportArea .stats-grid{
+grid-template-columns:repeat(2,minmax(0,1fr));
 }
-th,td{
-padding:7px 5px !important;
+table{font-size:12px}
+th,td{padding:7px 5px!important}
 }
+
+@media(max-width:520px){
+#reportArea .stats-grid{
+grid-template-columns:1fr;
+}
+}
+
+/* ===== طباعة محسنة ===== */
+@page{
+size:A4 landscape;
+margin:8mm;
 }
 
 @media print{
+html,body{
+width:100%!important;
+height:auto!important;
+margin:0!important;
+padding:0!important;
+background:#fff!important;
+color:#000!important;
+-webkit-print-color-adjust:exact!important;
+print-color-adjust:exact!important;
+}
+
 .search-area,
 .print-actions{
 display:none!important;
 }
 
-body,
 .main,
 .section,
-.parent-card{
-background:white!important;
-color:black!important;
+.parent-card,
+#reportArea{
+display:block!important;
+width:100%!important;
+max-width:none!important;
+min-height:0!important;
+margin:0!important;
 padding:0!important;
+background:#fff!important;
+color:#000!important;
+border:0!important;
+border-radius:0!important;
 box-shadow:none!important;
+overflow:visible!important;
+}
+
+.parent-header{
+margin:0 0 5mm!important;
+page-break-after:avoid!important;
+}
+
+.parent-logo{
+width:20mm!important;
+height:20mm!important;
+}
+
+.parent-header h2{
+color:#000!important;
+font-size:18px!important;
+margin:2mm 0 1mm!important;
+}
+
+.parent-header > div{
+color:#000!important;
+font-size:12px!important;
+}
+
+#reportArea .stats-grid{
+display:grid!important;
+grid-template-columns:2fr 1fr 1.25fr .85fr!important;
+gap:2mm!important;
+margin:0 0 4mm!important;
+page-break-inside:avoid!important;
+}
+
+#reportArea .stat-card{
+min-height:19mm!important;
+padding:2mm!important;
+background:#fff!important;
+border:1px solid #000!important;
+border-radius:0!important;
+page-break-inside:avoid!important;
+}
+
+#reportArea .stat-title{
+font-size:9px!important;
+color:#000!important;
+margin-bottom:1mm!important;
+}
+
+#reportArea .stat-number,
+#studentNameBox,
+#averageBox{
+font-size:12px!important;
+line-height:1.25!important;
+color:#000!important;
+}
+
+.table-wrap{
+width:100%!important;
+overflow:visible!important;
+border-radius:0!important;
 }
 
 table{
 width:100%!important;
+min-width:0!important;
+table-layout:fixed!important;
 border-collapse:collapse!important;
+page-break-inside:auto!important;
 }
 
-th,
-td{
+thead{
+display:table-header-group!important;
+}
+
+tr{
+page-break-inside:avoid!important;
+page-break-after:auto!important;
+}
+
+th,td{
 border:1px solid #000!important;
 color:#000!important;
-background:white!important;
-font-size:11px!important;
-font-weight:900!important;
-padding:5px!important;
+background:#fff!important;
+font-size:8.5px!important;
+font-weight:800!important;
+line-height:1.25!important;
+padding:1.5mm .8mm!important;
 text-align:center!important;
+vertical-align:middle!important;
+overflow-wrap:anywhere!important;
 }
 
-.stat-card{
-background:white!important;
-border:1px solid #000!important;
-}
-
-.stat-title,
-.stat-number{
-color:black!important;
-}
+/* توزيع الأعمدة على عرض الورقة */
+th:nth-child(1),td:nth-child(1){width:13%!important}
+th:nth-child(2),td:nth-child(2){width:13%!important}
+th:nth-child(3),td:nth-child(3){width:18%!important}
+th:nth-child(4),td:nth-child(4){width:9%!important}
+th:nth-child(5),td:nth-child(5){width:11%!important}
+th:nth-child(6),td:nth-child(6){width:12%!important}
+th:nth-child(7),td:nth-child(7){width:10%!important}
+th:nth-child(8),td:nth-child(8){width:14%!important}
 
 .status-badge,
 .curriculum-badge{
+display:inline!important;
+padding:0!important;
+border:0!important;
+border-radius:0!important;
 color:#000!important;
-background:white!important;
+background:transparent!important;
+font-size:8.5px!important;
+white-space:normal!important;
+}
+
+.support-message{
+margin-top:3mm!important;
+padding:2.5mm!important;
 border:1px solid #000!important;
+border-radius:0!important;
+background:#fff!important;
+color:#000!important;
+font-size:9px!important;
+line-height:1.5!important;
+page-break-inside:avoid!important;
 }
 
 .designer-credit{
-color:black!important;
+margin-top:3mm!important;
+color:#000!important;
+font-size:8px!important;
+page-break-inside:avoid!important;
 }
 }
 </style>
@@ -195,7 +372,7 @@ color:black!important;
 
 <body>
 
-<div class="main" style="min-height:100vh;padding:25px;">
+<div class="main">
 
 <div class="section active-section parent-card">
 
