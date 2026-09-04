@@ -2686,7 +2686,10 @@ async function loadExams(){
             [],
 
             curriculumType:
-            data.curriculumType || "basic"
+            data.curriculumType || "basic",
+
+            examDate:
+            data.examDate || ""
 
 
         });
@@ -2772,7 +2775,7 @@ function updateExamSelect(){
 
         `
         <option value="${exam.examName}">
-        ${exam.examName}
+        ${exam.examName}${exam.examDate ? ` — ${exam.examDate}` : ""}
         </option>
         `;
 
@@ -3370,6 +3373,14 @@ async function(){
 
     <span>
     الاختبار: ${examName}
+    </span>
+
+    <span class="report-info-separator">
+    |
+    </span>
+
+    <span>
+    تاريخ الاختبار: ${selectedExam.examDate || "-"}
     </span>
 
     <span class="report-info-separator">
